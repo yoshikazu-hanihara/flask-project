@@ -4,7 +4,7 @@ def get_connection():
     return pymysql.connect(
     host='localhost',
     user='flaskuser',
-    password='FlaskPassword0722',
+    password='Flask2025#0722Password!',
     db='flaskdb',
     charset='utf8mb4'
 )
