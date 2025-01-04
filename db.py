@@ -7,4 +7,5 @@ def get_connection():
     password='Flask2025#0722Password!',
     db='flaskdb',
     charset='utf8mb4'
+    cursorclass=pymysql.cursors.DictCursor
 )
