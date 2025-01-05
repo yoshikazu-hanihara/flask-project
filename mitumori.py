@@ -39,7 +39,6 @@ def calc_quantity_factor(q):
     exponent = (q - 1) / (20000 - 1)
     return factor_max * ((factor_min / factor_max) ** exponent)
 
-# オプション計算例: 釉薬, プリント, 特殊加工(旧:筆加飾)
 PRINT_SIZE_MAP = {
     'none': 0,
     'S': 3000,
@@ -67,7 +66,6 @@ GLAZE_UNIT_PRICE = 2.0  # 円/cm²
 ######################################
 @app.route('/')
 def index():
-    # 最初はログイン画面へ誘導
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET','POST'])
@@ -103,7 +101,6 @@ def login():
         conn.close()
 
         if user and bcrypt_sha256.verify(password, user['password_hash']):
-            # ログイン成功
             session.clear()
             session['user_id'] = user['id']
             session['email'] = user['email']
@@ -152,7 +149,6 @@ def logout():
 
 @app.route('/guest_estimate')
 def guest_estimate():
-    # ゲストモードフラグを立てる
     session.clear()
     session['guest_mode'] = True
     return redirect(url_for('upload_form'))
@@ -193,7 +189,6 @@ def upload_post():
     except:
         return "生産数が不正です。"
 
-    # 一時保存
     temp_path = os.path.join("temp", stl_file.filename)
     stl_file.save(temp_path)
 
@@ -205,10 +200,8 @@ def upload_post():
 
     # 数量係数
     quantity_factor = calc_quantity_factor(quantity)
-    # セラミック価格 (単純計算)
     total_ceramic = int(weight * CERAMIC_PRICE_PER_GRAM * quantity_factor * quantity)
 
-    # ログインユーザならDBに保管
     estimate_id = None
     if 'user_id' in session:
         user_id = session['user_id']
@@ -218,7 +211,6 @@ def upload_post():
             cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='active'", (user_id,))
             active_count = cursor.fetchone()['cnt']
             if active_count >= 3:
-                # 古い1件を削除状態に
                 cursor.execute("""
                   SELECT id FROM estimates
                    WHERE user_id=%s AND status='active'
@@ -228,7 +220,6 @@ def upload_post():
                 cursor.execute("UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s", (oldest_id,))
                 _cleanup_deleted(user_id, cursor)
 
-            # 新規insert
             estimate_data = {
                 "volume": volume,
                 "surface_area": surface_area,
@@ -245,7 +236,6 @@ def upload_post():
         conn.commit()
         conn.close()
 
-    # セッション保存
     session['temp_path'] = temp_path
     session['estimate_id'] = estimate_id
     session['volume'] = volume
@@ -271,7 +261,6 @@ def upload_post():
     return render_template_string(html)
 
 def _cleanup_deleted(user_id, cursor):
-    # 削除済み見積もり30件を超えたら最古の1件を完全削除
     cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='deleted'", (user_id,))
     del_count = cursor.fetchone()['cnt']
     if del_count > 30:
@@ -290,8 +279,6 @@ def _cleanup_deleted(user_id, cursor):
 @app.route('/choose_options', methods=['GET','POST'])
 def choose_options():
     if request.method == 'GET':
-        # 釉薬(色数), プリント(サイズ+色数), 特殊加工(サイズ+金プラ有無) をユーザーが選択
-        # 例: 従来チャットのサンプル
         html = '''
         <h2>オプション選択</h2>
         <form action="/choose_options" method="post">
@@ -332,29 +319,25 @@ def choose_options():
         '''
         return render_template_string(html)
     else:
-        # POST: 選択されたオプションを使い、最終合計を計算
         glaze_color = request.form.get('glaze_color', 'none')
         print_size = request.form.get('print_size', 'none')
         print_color = request.form.get('print_color', 'none')
         special_size = request.form.get('special_size', 'none')
         special_gold = request.form.get('special_gold')  # 'yes' or None
 
-        # まずセラミック価格
         base_ceramic = session.get('ceramic_price', 0)
-
-        # 数量や surface_area など
         quantity_factor = calc_quantity_factor(session.get('quantity',1))
         surface_area = session.get('surface_area', 0.0)
 
-        # 1) 施釉価格
+        # 1) 施釉
         if glaze_color == 'none':
             cost_glaze = 0
         else:
-            color_count = float(glaze_color)  # 1,2,3
+            color_count = float(glaze_color)
             base_glaze = surface_area * GLAZE_UNIT_PRICE * color_count
             cost_glaze = int(base_glaze * quantity_factor)
 
-        # 2) プリント価格
+        # 2) プリント
         base_print_size = PRINT_SIZE_MAP.get(print_size, 0)
         base_print_color = PRINT_COLOR_MAP.get(print_color, 0)
         cost_print = int((base_print_size + base_print_color) * quantity_factor)
@@ -366,14 +349,43 @@ def choose_options():
             cost_special += base_special * GOLD_PLATINUM_FACTOR * quantity_factor
         cost_special = int(cost_special)
 
-        # 最終合計
         final_total = base_ceramic + cost_glaze + cost_print + cost_special
         session['cost_glaze'] = cost_glaze
         session['cost_print'] = cost_print
         session['cost_special'] = cost_special
         session['final_total'] = final_total
 
-        # 次のページ(GET)へ
+        # ▼▼▼ ここでDBに反映（最小限の追加） ▼▼▼
+        user_id = session.get('user_id')
+        estimate_id = session.get('estimate_id')
+        if user_id and estimate_id:
+            conn = get_connection()
+            with conn.cursor() as cursor:
+                # 既存の estimate_data を取得
+                cursor.execute("""
+                  SELECT estimate_data
+                    FROM estimates
+                   WHERE id=%s AND user_id=%s
+                """, (estimate_id, user_id))
+                row = cursor.fetchone()
+                if row:
+                    old_data = json.loads(row['estimate_data'])
+                    # 内訳を追加
+                    old_data['cost_glaze'] = cost_glaze
+                    old_data['cost_print'] = cost_print
+                    old_data['cost_special'] = cost_special
+                    old_data['final_total'] = final_total
+
+                    # DB更新
+                    cursor.execute("""
+                      UPDATE estimates
+                         SET estimate_data=%s
+                       WHERE id=%s AND user_id=%s
+                    """, (json.dumps(old_data), estimate_id, user_id))
+            conn.commit()
+            conn.close()
+        # ▲▲▲ DB更新ここまで ▲▲▲
+
         return redirect(url_for('final_contact'))
 
 ######################################
@@ -381,7 +393,6 @@ def choose_options():
 ######################################
 @app.route('/final_contact', methods=['GET','POST'])
 def final_contact():
-    # GET のとき: 問い合わせフォーム表示
     if request.method == 'GET':
         final_total = session.get('final_total', 0)
         cost_glaze = session.get('cost_glaze', 0)
@@ -409,31 +420,28 @@ def final_contact():
         """
         return render_template_string(html)
     else:
-        # POST: メール送信 + DB更新
         name = request.form.get('name')
         company = request.form.get('company','')
         email = request.form.get('email')
         final_total = session.get('final_total', 0)
 
-        # DB更新: ログインユーザなら status='sent'
         user_id = session.get('user_id')
         estimate_id = session.get('estimate_id')
         if user_id and estimate_id:
             conn = get_connection()
             with conn.cursor() as cursor:
                 cursor.execute("""
-                  UPDATE estimates 
+                  UPDATE estimates
                      SET status='sent', sent_at=NOW()
                    WHERE id=%s AND user_id=%s
                 """, (estimate_id, user_id))
             conn.commit()
             conn.close()
 
-        # メール送信 (STL添付)
-        # (Flask-Mailの設定が正しく行われている前提)
         cost_glaze = session.get('cost_glaze', 0)
         cost_print = session.get('cost_print', 0)
         cost_special = session.get('cost_special', 0)
+
         body_text = f"""
 お名前: {name}
 企業名: {company}
@@ -448,11 +456,9 @@ def final_contact():
         msg = Message("見積もりお問い合わせ", recipients=["nworks12345@gmail.com"])
         msg.body = body_text
 
-        # STLファイルを添付 (ゲストでも添付可能)
         temp_path = session.get('temp_path')
         if temp_path and os.path.exists(temp_path):
             with open(temp_path, 'rb') as f:
-                # "application/sla" は .stl の MIME タイプの一例
                 msg.attach(
                     filename=os.path.basename(temp_path),
                     content_type="application/sla",
@@ -461,7 +467,7 @@ def final_contact():
 
         mail.send(msg)
 
-        # 後始末: 一時ファイル削除 & セッションクリア
+        # 後処理
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
         for key in ['temp_path','estimate_id','volume','surface_area','weight',
@@ -487,7 +493,6 @@ def history():
     user_id = session['user_id']
     conn = get_connection()
     with conn.cursor() as cursor:
-        # active
         cursor.execute("""
           SELECT id, estimate_data, created_at 
             FROM estimates
@@ -496,7 +501,6 @@ def history():
         """, (user_id,))
         active_list = cursor.fetchall()
 
-        # deleted
         cursor.execute("""
           SELECT id, estimate_data, created_at, deleted_at
             FROM estimates
@@ -505,7 +509,6 @@ def history():
         """, (user_id,))
         deleted_list = cursor.fetchall()
 
-        # sent
         cursor.execute("""
           SELECT id, estimate_data, created_at, sent_at
             FROM estimates
@@ -525,12 +528,36 @@ def history():
         for row in active_list:
             data = json.loads(row['estimate_data'])
             estid = row['id']
-            price = data.get('ceramic_price',0)
             created_str = row['created_at']
-            html += f"<div style='border:1px solid #ccc; margin:5px; padding:5px;'>"
-            html += f"<b>ID:</b> {estid} | <b>価格:</b> {price}円 | <b>作成日時:</b> {created_str}<br>"
-            html += f"<a href='/delete_estimate/{estid}'>この見積もりを削除</a>"
-            html += "</div>"
+
+            # ここで内訳を取り出して表示（最小限の修正）
+            ceramic_price = data.get('ceramic_price', 0)
+            cost_glaze    = data.get('cost_glaze', 0)
+            cost_print    = data.get('cost_print', 0)
+            cost_special  = data.get('cost_special', 0)
+            final_total   = data.get('final_total', 0)
+
+            # カンマ区切りするなら f"{value:,}"
+            ceramic_price_str = f"{ceramic_price:,}"
+            cost_glaze_str    = f"{cost_glaze:,}"
+            cost_print_str    = f"{cost_print:,}"
+            cost_special_str  = f"{cost_special:,}"
+            final_total_str   = f"{final_total:,}"
+
+            html += f"""
+            <div style='border:1px solid #ccc; margin:5px; padding:5px;'>
+              <b>ID:</b> {estid}<br>
+              作成日時: {created_str}<br><br>
+
+              セラミック価格(約): {ceramic_price_str} 円<br>
+              施釉(約): {cost_glaze_str} 円<br>
+              プリント(約): {cost_print_str} 円<br>
+              特殊加工(約): {cost_special_str} 円<br>
+              <b>最終合計(約): {final_total_str} 円</b><br><br>
+
+              <a href='/delete_estimate/{estid}'>この見積もりを削除</a>
+            </div>
+            """
 
     # --- Deleted ---
     html += """
@@ -585,7 +612,6 @@ def delete_estimate(estid):
     user_id = session['user_id']
     conn = get_connection()
     with conn.cursor() as cursor:
-        # status='deleted' に変更
         cursor.execute("""
           UPDATE estimates
              SET status='deleted', deleted_at=NOW()
