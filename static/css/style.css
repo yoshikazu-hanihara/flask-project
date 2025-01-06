@@ -1,0 +1,26 @@
+/* style.css - 必要に応じて修正 */
+
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background: #f7f7f7;
+  }
+  
+  h2 {
+    color: #333;
+  }
+  
+  form {
+    margin: 10px 0;
+  }
+  
+  input[type="submit"] {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+  }
+  input[type="submit"]:hover {
+    background: #0056b3;
+  }
+  
