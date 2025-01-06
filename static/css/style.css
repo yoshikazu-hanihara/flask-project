@@ -1,26 +1,29 @@
-/* style.css - 必要に応じて修正 */
-
+/* style.css - 簡易例 */
 body {
     font-family: sans-serif;
     margin: 20px;
-    background: #f7f7f7;
+    background-color: #fafafa;
   }
   
   h2 {
     color: #333;
   }
   
-  form {
-    margin: 10px 0;
+  .estimate-box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #fff;
   }
   
-  input[type="submit"] {
-    background: #007bff;
-    color: #fff;
+  button {
+    background-color: #008cba;
     border: none;
+    color: #fff;
     padding: 8px 16px;
+    cursor: pointer;
   }
-  input[type="submit"]:hover {
-    background: #0056b3;
+  button:hover {
+    background-color: #006f99;
   }
   
