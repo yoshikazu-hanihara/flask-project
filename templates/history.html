@@ -1,0 +1,80 @@
+<!-- templates/history.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>見積もり一覧</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <h2>見積もり一覧</h2>
+
+  <!-- アクティブ -->
+  <h3>アクティブ (送信可能) 最大3件</h3>
+  {% if not active_list %}
+    <p>アクティブな見積もりはありません。</p>
+  {% else %}
+    {% for row in active_list %}
+      {% set data = row['estimate_data']|safe|loads %}
+      <div class="estimate-box">
+        <b>ID:</b> {{ row['id'] }}<br>
+        作成日時: {{ row['created_at'] }}<br><br>
+        
+        セラミック価格(約): {{ data.ceramic_price|default(0) | int | format_thousand }} 円<br>
+        施釉(約): {{ data.cost_glaze|default(0) | int | format_thousand }} 円<br>
+        プリント(約): {{ data.cost_print|default(0) | int | format_thousand }} 円<br>
+        特殊加工(約): {{ data.cost_special|default(0) | int | format_thousand }} 円<br>
+        <b>最終合計(約): {{ data.final_total|default(0) | int | format_thousand }} 円</b><br><br>
+
+        <a href="{{ url_for('delete_estimate', estid=row['id']) }}">この見積もりを削除</a>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 削除済み -->
+  <h3 style="margin-top:30px;">削除済み見積もり (最大30)</h3>
+  <p>31件目の削除済みが出ると、最も古い削除済み見積もりは完全に削除されます。</p>
+  <button onclick="toggleDeleted()">削除済みを表示/非表示</button>
+  <div id="deletedSection" style="display:none; border:1px solid #ccc; margin:5px; padding:5px;">
+    {% if not deleted_list %}
+      <p>削除済みはありません。</p>
+    {% else %}
+      {% for row in deleted_list %}
+        {% set data = row['estimate_data']|safe|loads %}
+        <div style='border-bottom:1px solid #ddd; margin-bottom:5px;'>
+          <b>ID:</b> {{ row['id'] }} | 
+          <b>合計金額:</b> {{ data.ceramic_price|default(0) }}円 | 
+          <b>削除日時:</b> {{ row['deleted_at'] }}<br>
+          <a href="{{ url_for('pdf_only', estid=row['id']) }}">PDFで確認</a>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- 送信済み -->
+  <h3 style="margin-top:30px;">送信済み見積もり (新しい順)</h3>
+  {% if not sent_list %}
+    <p>送信済みはありません。</p>
+  {% else %}
+    {% for row in sent_list %}
+      {% set data = row['estimate_data']|safe|loads %}
+      <div style='border:1px solid #ccc; margin:5px; padding:5px;'>
+        <b>ID:</b> {{ row['id'] }} |
+        <b>価格:</b> {{ data.ceramic_price|default(0) }}円 |
+        <b>送信日時:</b> {{ row['sent_at'] }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <hr>
+  <p><a href="{{ url_for('upload_form') }}">新しい見積もり</a> |
+     <a href="{{ url_for('logout') }}">ログアウト</a></p>
+
+  <script>
+    function toggleDeleted(){
+      var d = document.getElementById('deletedSection');
+      d.style.display = (d.style.display=='none') ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
