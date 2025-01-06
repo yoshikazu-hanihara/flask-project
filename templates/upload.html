@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>STLアップロード</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <h2>STLファイル アップロード & 生産数入力</h2>
+  <p>最新の見積もりから３つまで比較検討できます。<br>
+     ※一気に送信された場合のサーバー負荷対策のため</p>
+  <form action="{{ url_for('upload_post') }}" method="post" enctype="multipart/form-data">
+    <label>STLファイル:</label><br>
+    <input type="file" name="file"><br><br>
+    <label>生産数 (1~20000):</label><br>
+    <input type="number" name="quantity" value="1" min="1" max="20000"><br><br>
+    <input type="submit" value="解析する">
+  </form>
+  <hr>
+  {% if session.user_id %}
+    <p><a href="{{ url_for('history') }}">見積もり一覧</a> | <a href="{{ url_for('logout') }}">ログアウト</a></p>
+  {% else %}
+    <p><a href="{{ url_for('login') }}">ログイン</a> (ゲストモード)</p>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>解析結果</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <h2>解析結果</h2>
+  <p>体積: {{ volume }} cm³<br>
+     重量: {{ weight }} g<br>
+     生産数: {{ quantity }} 個</p>
+  <p>セラミック価格(約): {{ total_ceramic }} 円</p>
+
+  <form action="{{ url_for('choose_options') }}" method="get">
+    <input type="submit" value="次へ (オプション選択)">
+  </form>
+  <hr>
+  {% if session.user_id %}
+    <a href="{{ url_for('history') }}">見積もり一覧</a> | <a href="{{ url_for('logout') }}">ログアウト</a>
+  {% else %}
+    <a href="{{ url_for('login') }}">ログイン</a> (ゲストモード)
+  {% endif %}
+</body>
+</html>
