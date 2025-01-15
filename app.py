@@ -379,7 +379,7 @@ def final_contact():
         return "<h2>お問い合わせが送信されました。</h2><p><a href='/upload'>新しい見積もり</a> | <a href='/history'>履歴</a> | <a href='/logout'>ログアウト</a></p>"
 
 ######################################
-# 履歴画面
+# 履歴画面 (JSONをPython側であらかじめパース)
 ######################################
 @app.route('/history')
 def history():
@@ -397,6 +397,8 @@ def history():
            ORDER BY created_at DESC
         """,(user_id,))
         active_list = cursor.fetchall()
+        for row in active_list:
+            row['estimate_data'] = json.loads(row['estimate_data'])
 
         # deleted
         cursor.execute("""
@@ -406,6 +408,8 @@ def history():
            ORDER BY deleted_at DESC
         """,(user_id,))
         deleted_list = cursor.fetchall()
+        for row in deleted_list:
+            row['estimate_data'] = json.loads(row['estimate_data'])
 
         # sent
         cursor.execute("""
@@ -415,13 +419,17 @@ def history():
            ORDER BY sent_at DESC
         """,(user_id,))
         sent_list = cursor.fetchall()
+        for row in sent_list:
+            row['estimate_data'] = json.loads(row['estimate_data'])
+
     conn.close()
 
-    return render_template('history.html',
-                           active_list=active_list,
-                           deleted_list=deleted_list,
-                           sent_list=sent_list
-                           )
+    return render_template(
+        'history.html',
+        active_list=active_list,
+        deleted_list=deleted_list,
+        sent_list=sent_list
+    )
 
 @app.route('/delete_estimate/<int:estid>')
 def delete_estimate(estid):
