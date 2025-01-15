@@ -15,7 +15,7 @@
     <p>アクティブな見積もりはありません。</p>
   {% else %}
     {% for row in active_list %}
-      {% set data = row['estimate_data']|safe|loads %}
+      {% set data = row['estimate_data'] %}
       <div class="estimate-box">
         <b>ID:</b> {{ row['id'] }}<br>
         作成日時: {{ row['created_at'] }}<br><br>
@@ -40,7 +40,7 @@
       <p>削除済みはありません。</p>
     {% else %}
       {% for row in deleted_list %}
-        {% set data = row['estimate_data']|safe|loads %}
+        {% set data = row['estimate_data'] %}
         <div style='border-bottom:1px solid #ddd; margin-bottom:5px;'>
           <b>ID:</b> {{ row['id'] }} | 
           <b>合計金額:</b> {{ data.ceramic_price|default(0) }}円 | 
@@ -57,7 +57,7 @@
     <p>送信済みはありません。</p>
   {% else %}
     {% for row in sent_list %}
-      {% set data = row['estimate_data']|safe|loads %}
+      {% set data = row['estimate_data'] %}
       <div style='border:1px solid #ccc; margin:5px; padding:5px;'>
         <b>ID:</b> {{ row['id'] }} |
         <b>価格:</b> {{ data.ceramic_price|default(0) }}円 |
