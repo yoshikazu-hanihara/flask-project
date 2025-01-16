@@ -15,6 +15,22 @@ from db import get_connection
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # セッションキー
 
+
+
+# --- カスタムフィルタを定義 ---
+@app.template_filter('format_thousand')
+def format_thousand(value):
+    """
+    数値を3桁区切りにして返すカスタムフィルタ
+    """
+    try:
+        value = int(value)
+        return f"{value:,}"
+    except:
+        return value
+
+
+
 # Flask-Mail の設定 (Gmail) - 例
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
