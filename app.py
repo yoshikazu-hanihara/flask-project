@@ -16,13 +16,9 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # セッションキー
 
 
-
-# --- カスタムフィルタを定義 ---
+# カスタムフィルタの定義
 @app.template_filter('format_thousand')
 def format_thousand(value):
-    """
-    数値を3桁区切りにして返すカスタムフィルタ
-    """
     try:
         value = int(value)
         return f"{value:,}"
