@@ -27,3 +27,15 @@ body {
     background-color: #006f99;
   }
   
+.box-1{
+    padding: 15px;
+    background-color: green;
+
+}
+
+.box-2{
+    padding: 15px;
+    background-color: green;
+    border: 1px solid #000;
+
+}
