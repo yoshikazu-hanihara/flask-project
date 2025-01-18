@@ -52,3 +52,36 @@ body {
     border: 1px solid #000;
 
 }
+
+
+
+/* そのほかクラス .estimate-box など必要に応じて */
+.estimate-box {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* 例: 削除済みの囲みを少し見やすく */
+#deletedSection {
+  border: 1px solid #ccc;
+  margin: 5px;
+  padding: 1rem;
+}
+
+/* ボタンやリンクのデザイン例 */
+button {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 1px solid #777;
+  background: #eee;
+}
+
+a {
+  color: #0055aa; /* お好みで */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
