@@ -2,10 +2,12 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>STLアップロード</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  <div class="wrapper">
   <h2>STLファイル アップロード & 生産数入力</h2>
   <p>最新の見積もりから３つまで比較検討できます。<br>
      ※一気に送信された場合のサーバー負荷対策のため</p>
@@ -22,5 +24,6 @@
   {% else %}
     <p><a href="{{ url_for('login') }}">ログイン</a> (ゲストモード)</p>
   {% endif %}
+  </div>
 </body>
 </html>
