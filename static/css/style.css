@@ -42,7 +42,7 @@ body {
 .box-1{
     padding: 15px;
     background-color: green;
-    color: white;
+    color: #fff;
 
 }
 
@@ -76,11 +76,14 @@ button {
   background: #eee;
 }
 
+
+/*--
 a {
-  color: #0055aa; /* お好みで */
+  color: #0055aa; 
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
 }
+--*/
