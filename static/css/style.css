@@ -4,6 +4,19 @@ body {
     margin: 20px;
     background-color: #fafafa;
   }
+
+
+.wrapper {
+  max-width: 1500px;
+  width: 100%;
+  
+  /* 自動的に中央寄せ */
+  margin: 0 auto;
+  
+  /* 左右の内側余白 (スマホでも見やすく) */
+  padding: 0 1rem; /* 1rem = ブラウザ既定文字サイズ程度 (16px) */
+}
+
   
   h2 {
     color: #333;
