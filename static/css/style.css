@@ -7,8 +7,7 @@ body {
 
 
 .wrapper {
-  max-width: 1500px;
-  width: 100%;
+  max-width: 1000px;
   
   /* 自動的に中央寄せ */
   margin: 0 auto;
