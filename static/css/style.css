@@ -73,7 +73,7 @@ button {
   cursor: pointer;
   padding: 0.5rem 1rem;
   border: 1px solid #777;
-  background: #eee;
+  /*--background: #eee;--*/
 }
 
 
