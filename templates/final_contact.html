@@ -11,17 +11,18 @@
   <div class="wrapper">
   <h2>お問い合わせフォーム</h2>
   <p>以下の内容でよろしければ送信してください。</p>
+    
+    <p><b>見積もり用STLファイル名:</b> {{ filename }}</p>
+    <p>生産数: {{ quantity }} 個</p>
   <p>
     施釉(約): {{ cost_glaze }} 円<br>
     プリント(約): {{ cost_print }} 円<br>
     特殊加工(約): {{ cost_special }} 円<br>
     <b>最終合計(約): {{ final_total }} 円</b>
 
-    {% if filename %}
-    <p><b>見積もり用STLファイル名:</b> {{ filename }}</p>
-  {% else %}
-    <p><b>見積もり用STLファイル名:</b> なし</p>
-  {% endif %}
+  
+   
+
     
   </p>
 
