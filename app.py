@@ -330,6 +330,7 @@ def final_contact():
             cost_glaze=session.get('cost_glaze', 0),
             cost_print=session.get('cost_print', 0),
             cost_special=session.get('cost_special', 0)
+            filename=session.get('filename', None),
         )
     else:
         name = request.form.get('name')
