@@ -443,6 +443,50 @@ def history():
         sent_list=sent_list
     )
 
+
+##########################################
+#「履歴でアクティブな見積もりを選ぶ」→「send_estimate を経由してセッションに再セット」→「既存の final_contact 画面へ」
+##########################################
+
+@app.route('/send_estimate/<int:estid>')
+def send_estimate(estid):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("""
+          SELECT estimate_data 
+            FROM estimates
+           WHERE id=%s AND user_id=%s AND status='active'
+        """, (estid, user_id))
+        row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return "この見積もりは存在しないか、既に削除または送信済みです。"
+
+    data = json.loads(row['estimate_data'])
+    session['estimate_id']  = estid
+    session['ceramic_price'] = data.get('ceramic_price', 0)
+    session['cost_glaze']   = data.get('cost_glaze', 0)
+    session['cost_print']   = data.get('cost_print', 0)
+    session['cost_special'] = data.get('cost_special', 0)
+    session['final_total']  = data.get('final_total', 0)
+
+    return redirect(url_for('final_contact'))
+
+
+
+
+
+
+
+
+
+
+
 @app.route('/delete_estimate/<int:estid>')
 def delete_estimate(estid):
     if 'user_id' not in session:
