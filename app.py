@@ -472,6 +472,7 @@ def send_estimate(estid):
 
     data = json.loads(row['estimate_data'])
     session['estimate_id']  = estid
+    session['filename']     = data.get('filename', '')
     session['ceramic_price'] = data.get('ceramic_price', 0)
     session['cost_glaze']   = data.get('cost_glaze', 0)
     session['cost_print']   = data.get('cost_print', 0)
