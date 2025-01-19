@@ -331,6 +331,7 @@ def final_contact():
             cost_print=session.get('cost_print', 0),
             cost_special=session.get('cost_special', 0),
             filename=session.get('filename', None),
+            quantity=session.get('quantity', 1),
         )
     else:
         name = request.form.get('name')
