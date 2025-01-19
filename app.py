@@ -338,6 +338,7 @@ def final_contact():
         company = request.form.get('company','')
         email = request.form.get('email')
         final_total = session.get('final_total', 0)
+        quantity = session.get('quantity', 1)
 
         # DB更新
         user_id = session.get('user_id')
