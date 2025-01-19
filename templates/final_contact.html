@@ -16,6 +16,13 @@
     プリント(約): {{ cost_print }} 円<br>
     特殊加工(約): {{ cost_special }} 円<br>
     <b>最終合計(約): {{ final_total }} 円</b>
+
+    {% if filename %}
+    <p><b>見積もり用STLファイル名:</b> {{ filename }}</p>
+  {% else %}
+    <p><b>見積もり用STLファイル名:</b> なし</p>
+  {% endif %}
+    
   </p>
 
   <form method="post" action="{{ url_for('final_contact') }}">
