@@ -28,7 +28,8 @@
         特殊加工(約): {{ data.cost_special|default(0) | int | format_thousand }} 円<br>
         <b>最終合計(約): {{ data.final_total|default(0) | int | format_thousand }} 円</b><br><br>
 
-        <a href="{{ url_for('delete_estimate', estid=row['id']) }}">この見積もりを削除</a>
+        <a href="{{ url_for('delete_estimate', estid=row['id']) }}">この見積もりを削除</a> |
+        <a href="{{ url_for('send_estimate', estid=row['id']) }}">この見積もりを送信する</a>
       </div>
     {% endfor %}
   {% endif %}
