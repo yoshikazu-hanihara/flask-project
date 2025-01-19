@@ -363,10 +363,8 @@ def final_contact():
 お名前: {name}
 企業名: {company}
 メールアドレス: {email}
-
 STLファイル名: {filename}
 生産数: {quantity} 個
-
 施釉(約): {cost_glaze} 円
 プリント(約): {cost_print} 円
 特殊加工(約): {cost_special} 円
