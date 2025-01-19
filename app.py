@@ -340,6 +340,8 @@ def final_contact():
         final_total = session.get('final_total', 0)
         quantity = session.get('quantity', 1)
 
+        filename = session.get('filename', '')
+
         # DB更新
         user_id = session.get('user_id')
         estimate_id = session.get('estimate_id')
