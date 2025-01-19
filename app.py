@@ -200,6 +200,7 @@ def upload_post():
 
             # 新規insert
             estimate_data = {
+                "filename": stl_file.filename,
                 "volume": volume,
                 "surface_area": surface_area,
                 "weight": weight,
