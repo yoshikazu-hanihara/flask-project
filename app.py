@@ -217,6 +217,7 @@ def upload_post():
         conn.close()
 
     # セッションにも保存
+    session['filename'] = stl_file.filename
     session['temp_path'] = temp_path
     session['estimate_id'] = estimate_id
     session['volume'] = volume
