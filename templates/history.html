@@ -21,6 +21,7 @@
       <div class="estimate-box">
         <b>ID:</b> {{ row['id'] }}<br>
         <b>STLファイル:</b> {{ data.filename }}<br>
+         **数量: {{ data.quantity }} 個**<br><br>
         作成日時: {{ row['created_at'] }}<br><br>
         
         セラミック価格(約): {{ data.ceramic_price|default(0) | int | format_thousand }} 円<br>
