@@ -1,14 +1,10 @@
 # app.py
-from flask import Flask, request, session, render_template, url_for, redirect, make_response
+from flask import Flask, request, session, render_template, url_for, redirect
 import os, json
 from stl import mesh
 from flask_mail import Mail, Message
 from passlib.hash import bcrypt_sha256
 from datetime import datetime
-
-import pdfkit  # PDF生成ライブラリ
-
-
 
 # DB接続用 (PyMySQL)
 from db import get_connection
@@ -498,9 +494,25 @@ def send_estimate(estid):
 
 
 
-######################################
-# pdf_only (PDF生成)
-######################################
+
+
+
+@app.route('/delete_estimate/<int:estid>')
+def delete_estimate(estid):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("""
+          UPDATE estimates SET status='deleted', deleted_at=NOW()
+           WHERE id=%s AND user_id=%s
+        """,(estid, user_id))
+        _cleanup_deleted(user_id, cursor)
+    conn.commit()
+    conn.close()
+    return redirect(url_for('history'))
+
 @app.route('/pdf_only/<int:estid>')
 def pdf_only(estid):
     if 'user_id' not in session:
@@ -510,9 +522,9 @@ def pdf_only(estid):
     conn = get_connection()
     with conn.cursor() as cursor:
         cursor.execute("""
-          SELECT estimate_data, deleted_at, status FROM estimates
+          SELECT estimate_data, status FROM estimates
            WHERE id=%s AND user_id=%s
-        """, (estid, user_id))
+        """,(estid, user_id))
         row = cursor.fetchone()
     conn.close()
 
@@ -523,28 +535,7 @@ def pdf_only(estid):
 
     data = json.loads(row['estimate_data'])
     price = data.get('ceramic_price', 0)
-    deleted_at = row['deleted_at']
-
-    # PDF 用の HTML をテンプレートで生成
-    rendered_html = render_template(
-        'pdf_template.html',  # あらかじめ templates/ 下に配置
-        price=price,
-        deleted_at=deleted_at,
-        data=data
-    )
-
-    # wkhtmltopdf のパスを指定する場合
-    # config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
-    # pdf = pdfkit.from_string(rendered_html, False, configuration=config)
-
-    # パス指定が不要(標準パスにインストール済み)なら
-    pdf = pdfkit.from_string(rendered_html, False)
-
-    # PDFレスポンスを返す
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'inline; filename="estimate.pdf"'
-    return response
+    return f"<h2>削除済み見積もり (PDFダミー)</h2><p>合計金額: {price} 円</p><p><a href='/history'>戻る</a></p>"
 
 ######################################
 # メイン
