@@ -6,6 +6,11 @@ from flask_mail import Mail, Message
 from passlib.hash import bcrypt_sha256
 from datetime import datetime
 
+import pdfkit
+from flask import make_response, render_template, redirect, url_for, session
+
+
+
 # DB接続用 (PyMySQL)
 from db import get_connection
 
@@ -522,7 +527,7 @@ def pdf_only(estid):
     conn = get_connection()
     with conn.cursor() as cursor:
         cursor.execute("""
-          SELECT estimate_data, status FROM estimates
+          SELECT estimate_data, deleted_at, status FROM estimates
            WHERE id=%s AND user_id=%s
         """,(estid, user_id))
         row = cursor.fetchone()
@@ -533,10 +538,34 @@ def pdf_only(estid):
     if row['status'] != 'deleted':
         return "これは削除済みではありません。"
 
+    # JSONをPythonのdictに変換
     data = json.loads(row['estimate_data'])
     price = data.get('ceramic_price', 0)
-    return f"<h2>削除済み見積もり (PDFダミー)</h2><p>合計金額: {price} 円</p><p><a href='/history'>戻る</a></p>"
+    deleted_at = row['deleted_at']
 
+    # PDF生成用HTMLをテンプレートからレンダリング
+    rendered_html = render_template(
+        'pdf_template.html',
+        price=price,
+        deleted_at=deleted_at,
+        data=data
+    )
+
+    # wkhtmltopdf パスが必要なら指定 (環境に応じて)
+    # config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
+    # pdf = pdfkit.from_string(rendered_html, False, configuration=config)
+
+    # wkhtmltopdf のパス指定が不要なら下記だけでOK
+    pdf = pdfkit.from_string(rendered_html, False)
+
+    # PDFをHTTPレスポンスとして返す
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    # inline => ブラウザ内表示、attachment => ダウンロード
+    response.headers['Content-Disposition'] = 'inline; filename="estimate.pdf"'
+
+    return response
+    
 ######################################
 # メイン
 ######################################
