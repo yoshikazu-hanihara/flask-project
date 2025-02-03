@@ -1,3 +1,4 @@
+<!-- templates/pdf_template.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -13,12 +14,16 @@
 <body>
   <div class="title">削除済み見積もり PDF</div>
   <div class="section">
-    <span class="label">セラミック価格(約):</span>
-    {{ data.ceramic_price }} 円
+    <span class="label">商品:</span>
+    {{ data.product_name }}
   </div>
   <div class="section">
     <span class="label">生産数:</span>
     {{ data.quantity }} 個
+  </div>
+  <div class="section">
+    <span class="label">最終合計金額:</span>
+    {{ data.final_total }} 円
   </div>
   <div class="section">
     <span class="label">削除済み時刻:</span>
