@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF出力用テンプレート</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .title { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+    .section { margin-bottom: 20px; }
+    .label { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="title">削除済み見積もり PDF</div>
+  <div class="section">
+    <span class="label">セラミック価格(約):</span>
+    {{ data.ceramic_price }} 円
+  </div>
+  <div class="section">
+    <span class="label">生産数:</span>
+    {{ data.quantity }} 個
+  </div>
+  <div class="section">
+    <span class="label">削除済み時刻:</span>
+    {{ deleted_at }}
+  </div>
+</body>
+</html>

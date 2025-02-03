@@ -1,0 +1,55 @@
+<!-- templates/options.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>オプション選択</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="wrapper">
+  <h2>オプション選択</h2>
+  <form action="{{ url_for('choose_options') }}" method="post">
+    <fieldset>
+      <legend>施釉 (釉薬)</legend>
+      <label><input type="radio" name="glaze_color" value="none" checked> 施釉なし(素地)</label><br>
+      <label><input type="radio" name="glaze_color" value="1"> 1色</label><br>
+      <label><input type="radio" name="glaze_color" value="2"> 2色</label><br>
+      <label><input type="radio" name="glaze_color" value="3"> 3色</label><br>
+    </fieldset>
+    <br>
+
+    <fieldset>
+      <legend>プリント加工</legend>
+      <p>サイズ:</p>
+      <label><input type="radio" name="print_size" value="none" checked> なし</label><br>
+      <label><input type="radio" name="print_size" value="S"> S (3000円)</label><br>
+      <label><input type="radio" name="print_size" value="M"> M (9000円)</label><br>
+      <label><input type="radio" name="print_size" value="L"> L (15000円)</label><br>
+
+      <p>プリント色数:</p>
+      <label><input type="radio" name="print_color" value="none" checked> 色なし</label><br>
+      <label><input type="radio" name="print_color" value="1"> 1色 (10000円)</label><br>
+      <label><input type="radio" name="print_color" value="2"> 2色 (15000円)</label><br>
+      <label><input type="radio" name="print_color" value="3"> 3色 (20000円)</label><br>
+    </fieldset>
+    <br>
+
+    <fieldset>
+      <legend>特殊加工 (ばかし / グラデ / 金・プラチナ加飾等)</legend>
+      <label><input type="radio" name="special_size" value="none" checked> なし</label><br>
+      <label><input type="radio" name="special_size" value="small"> 小 (3000円)</label><br>
+      <label><input type="radio" name="special_size" value="medium"> 中 (6000円)</label><br>
+      <label><input type="radio" name="special_size" value="large"> 大 (9000円)</label><br><br>
+      <label><input type="checkbox" name="special_gold" value="yes"> 金・プラチナを希望する(+3倍)</label><br>
+    </fieldset>
+    <br>
+
+    <input type="submit" value="計算して次へ (お問い合わせフォーム)">
+  </form>
+  <hr>
+  <a href="{{ url_for('upload_form') }}">戻る</a>
+  </div>
+</body>
+</html>
