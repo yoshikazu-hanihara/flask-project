@@ -56,6 +56,7 @@ def calc_quantity_factor(q):
 ######################################
 @app.route('/')
 def index():
+    # 最初はログイン画面へ誘導
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET','POST'])
@@ -110,6 +111,7 @@ def logout():
 
 @app.route('/guest_estimate')
 def guest_estimate():
+    # ゲストモードフラグを立てる
     session.clear()
     session['guest_mode'] = True
     return redirect(url_for('dashboard'))
@@ -136,7 +138,7 @@ def dashboard_post():
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-    # 総合計（ダミー計算例）
+    # ダミー計算例：各項目の数値を合計して最終合計 (total_cost) とする
     total_cost = (sales_price + order_quantity + product_weight +
                   mold_unit_price + mold_count + kiln_count +
                   gas_unit_price + loss_defective)
@@ -235,7 +237,35 @@ def dashboard_post():
     manufacturing_cost_ratio = (manufacturing_cost_total / total_cost * 100) if total_cost > 0 else 0
     # ----- ここまで製造販管費処理 -----
     
-    # 入力内容と計算結果をまとめる
+    # ----- 販売管理費の on/off 項目処理 -----
+    include_nouhin_jinkenhi = request.form.get('include_nouhin_jinkenhi')
+    include_gasoline        = request.form.get('include_gasoline')
+    
+    dummy_sales_costs = {
+        'nouhin_jinkenhi': 500,
+        'gasoline': 300
+    }
+    
+    sales_admin_cost_total = 0
+    if include_nouhin_jinkenhi:
+        sales_admin_cost_total += dummy_sales_costs['nouhin_jinkenhi']
+    if include_gasoline:
+        sales_admin_cost_total += dummy_sales_costs['gasoline']
+    
+    sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
+    # ----- ここまで販売管理費処理 -----
+    
+    # ----- 全体の合計出力（別枠） -----
+    # 製造原価 = 原材料費合計 + 製造販管費合計
+    production_cost_total = raw_material_cost_total + manufacturing_cost_total
+    # 製造原価＋販売管理費
+    production_plus_sales = production_cost_total + sales_admin_cost_total
+    # 利益額 = 総合計 - (製造原価＋販売管理費)
+    profit_amount = total_cost - production_plus_sales
+    profit_ratio = (profit_amount / total_cost * 100) if total_cost > 0 else 0
+    # ----- ここまで全体の合計出力 -----
+    
+    # 入力内容と各計算結果をまとめる
     dashboard_data = {
         "sales_price": sales_price,
         "order_quantity": order_quantity,
@@ -246,11 +276,21 @@ def dashboard_post():
         "gas_unit_price": gas_unit_price,
         "loss_defective": loss_defective,
         "total_cost": total_cost,
+        # 材料費原価
         "raw_material_cost_total": raw_material_cost_total,
         "raw_material_cost_ratio": raw_material_cost_ratio,
+        # 製造販管費
         "manufacturing_cost_total": manufacturing_cost_total,
         "manufacturing_cost_ratio": manufacturing_cost_ratio,
-        "yield_coefficient": yield_coefficient
+        "yield_coefficient": yield_coefficient,
+        # 販売管理費
+        "sales_admin_cost_total": sales_admin_cost_total,
+        "sales_admin_cost_ratio": sales_admin_cost_ratio,
+        # 全体合計出力
+        "production_cost_total": production_cost_total,
+        "production_plus_sales": production_plus_sales,
+        "profit_amount": profit_amount,
+        "profit_ratio": profit_ratio
     }
     
     # ログインユーザならDBに登録（active見積もりは最大3件まで）
@@ -312,7 +352,7 @@ def final_contact():
         dashboard_data = session.get('dashboard_data', {})
         total_cost = dashboard_data.get('total_cost', 0)
         
-        # DB更新（ログインユーザの場合、見積もり状態を「sent」に更新）
+        # DB更新：ログインユーザの場合、見積もりの状態を「sent」に更新
         user_id = session.get('user_id')
         estimate_id = session.get('estimate_id')
         if user_id and estimate_id:
@@ -326,34 +366,47 @@ def final_contact():
             conn.commit()
             conn.close()
         
+        # メール送信用内容（ダッシュボード入力項目および各コスト計算結果を記載）
         body_text = f"""
 お名前: {name}
 企業名: {company}
 メールアドレス: {email}
-売価: {dashboard_data.get('sales_price')}
-発注数: {dashboard_data.get('order_quantity')}
-製品重量: {dashboard_data.get('product_weight')}
-使用型単価: {dashboard_data.get('mold_unit_price')}
-使用型の数出し数: {dashboard_data.get('mold_count')}
-窯入数: {dashboard_data.get('kiln_count')}
-ガス単価: {dashboard_data.get('gas_unit_price')}
-ロス 不良: {dashboard_data.get('loss_defective')}
------------------------------
-最終合計: {total_cost}
+
+【基本項目】
+　売価: {dashboard_data.get('sales_price')}
+　発注数: {dashboard_data.get('order_quantity')}
+　製品重量: {dashboard_data.get('product_weight')}
+　使用型単価: {dashboard_data.get('mold_unit_price')}
+　使用型の数出し数: {dashboard_data.get('mold_count')}
+　窯入数: {dashboard_data.get('kiln_count')}
+　ガス単価: {dashboard_data.get('gas_unit_price')}
+　ロス 不良: {dashboard_data.get('loss_defective')}
+　最終合計: {total_cost}
+
 【原材料費】
 　原材料費合計: {dashboard_data.get('raw_material_cost_total')}
 　原材料費原価率: {dashboard_data.get('raw_material_cost_ratio'):.2f}%
------------------------------
+
 【製造販管費】
 　歩留まり係数: {dashboard_data.get('yield_coefficient'):.2f}
 　製造販管費合計: {dashboard_data.get('manufacturing_cost_total')}
 　製造販管費原価率: {dashboard_data.get('manufacturing_cost_ratio'):.2f}%
+
+【販売管理費】
+　販売管理費合計: {dashboard_data.get('sales_admin_cost_total')}
+　販売管理費率: {dashboard_data.get('sales_admin_cost_ratio'):.2f}%
+
+【全体合計】
+　製造原価＋販売管理費: {dashboard_data.get('production_plus_sales')}
+　利益額: {dashboard_data.get('profit_amount')}
+　利益率: {dashboard_data.get('profit_ratio'):.2f}%
 """
         msg = Message("見積もりお問い合わせ", recipients=["nworks12345@gmail.com"])
         msg.body = body_text
 
         mail.send(msg)
 
+        # セッションのダッシュボード関連データをクリア
         for key in ['dashboard_data', 'estimate_id']:
             session.pop(key, None)
 
