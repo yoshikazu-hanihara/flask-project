@@ -76,6 +76,38 @@ button {
   /*--background: #eee;--*/
 }
 
+/*---ダッシュボードなどのcss----*/
+
+
+
+#nyuuryoku{ 
+color: red; 
+}
+
+
+#zairyougenkahi{ 
+background-color: blue; 
+}
+
+#seizouhannkannhi{
+ background-color: green; 
+}
+
+#hannbaikannrihi{
+ background-color: red; 
+}
+
+.formbox-0{ 
+color: red; 
+}
+
+
+.formbox-1{ 
+color: red; 
+}
+
+
+
 
 /*--
 a {
