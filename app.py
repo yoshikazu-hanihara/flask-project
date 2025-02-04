@@ -56,7 +56,6 @@ def calc_quantity_factor(q):
 ######################################
 @app.route('/')
 def index():
-    # 最初はログイン画面へ誘導
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET','POST'])
@@ -68,7 +67,6 @@ def login():
         password = request.form.get('password')
         if not email or not password:
             return "メールアドレス / パスワードを入力してください。"
-
         conn = get_connection()
         user = None
         with conn.cursor() as cursor:
@@ -76,8 +74,6 @@ def login():
             cursor.execute(sql, (email,))
             user = cursor.fetchone()
         conn.close()
-
-        # パスワードハッシュ照合
         if user and bcrypt_sha256.verify(password, user['password_hash']):
             session.clear()
             session['user_id'] = user['id']
@@ -95,9 +91,7 @@ def register():
         password = request.form.get('password')
         if not email or not password:
             return "必須項目が未入力です。"
-
         password_hash = bcrypt_sha256.hash(password)
-
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -107,7 +101,6 @@ def register():
             conn.close()
             return "登録に失敗しました。既に使われているメールアドレスかもしれません。"
         conn.close()
-
         return redirect(url_for('login'))
 
 @app.route('/logout')
@@ -117,7 +110,6 @@ def logout():
 
 @app.route('/guest_estimate')
 def guest_estimate():
-    # ゲストモードフラグを立てる
     session.clear()
     session['guest_mode'] = True
     return redirect(url_for('dashboard'))
@@ -132,39 +124,35 @@ def dashboard():
 @app.route('/dashboard_post', methods=['POST'])
 def dashboard_post():
     try:
-        # 入力項目（数値入力）
+        # 上部の数値入力項目
         sales_price     = float(request.form.get('sales_price'))
         order_quantity  = int(request.form.get('order_quantity'))
         product_weight  = float(request.form.get('product_weight'))
         mold_unit_price = float(request.form.get('mold_unit_price'))
         mold_count      = int(request.form.get('mold_count'))
-        # ※先行していた「釉薬代」はここでは別扱いの材料費項目となるため、
-        # dashboard.html の上部入力項目には含めず、本来の工程用釉薬代との区別とします。
         kiln_count      = int(request.form.get('kiln_count'))
         gas_unit_price  = float(request.form.get('gas_unit_price'))
         loss_defective  = float(request.form.get('loss_defective'))
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-    # ダミー計算例：各項目の数値を単純に合計して最終合計（total_cost）とする
+    # 総合計（ダミー計算例）
     total_cost = (sales_price + order_quantity + product_weight +
                   mold_unit_price + mold_count + kiln_count +
                   gas_unit_price + loss_defective)
     
-    # ----- ここから材料費原価のon/off項目処理 -----
-    # 各材料費項目はチェックボックスで on/off を選択（チェック時は 'on' が渡る）
-    include_dohdai            = request.form.get('include_dohdai')
-    include_kata              = request.form.get('include_kata')
-    include_drying_fuel       = request.form.get('include_drying_fuel')
-    include_bisque_fuel       = request.form.get('include_bisque_fuel')
-    include_hassui            = request.form.get('include_hassui')
-    include_paint             = request.form.get('include_paint')
-    include_logo_copper       = request.form.get('include_logo_copper')
-    include_glaze_material    = request.form.get('include_glaze_material')
-    include_main_firing_gas   = request.form.get('include_main_firing_gas')
-    include_transfer_sheet    = request.form.get('include_transfer_sheet')
+    # ----- 材料費原価の on/off 項目処理 -----
+    include_dohdai          = request.form.get('include_dohdai')
+    include_kata            = request.form.get('include_kata')
+    include_drying_fuel     = request.form.get('include_drying_fuel')
+    include_bisque_fuel     = request.form.get('include_bisque_fuel')
+    include_hassui          = request.form.get('include_hassui')
+    include_paint           = request.form.get('include_paint')
+    include_logo_copper     = request.form.get('include_logo_copper')
+    include_glaze_material  = request.form.get('include_glaze_material')
+    include_main_firing_gas = request.form.get('include_main_firing_gas')
+    include_transfer_sheet  = request.form.get('include_transfer_sheet')
     
-    # ダミー金額（後日計算式に合わせて修正）
     dummy_costs = {
         'dohdai': 100,
         'kata': 200,
@@ -179,32 +167,75 @@ def dashboard_post():
     }
     
     raw_material_cost_total = 0
-    if include_dohdai:
-        raw_material_cost_total += dummy_costs['dohdai']
-    if include_kata:
-        raw_material_cost_total += dummy_costs['kata']
-    if include_drying_fuel:
-        raw_material_cost_total += dummy_costs['drying_fuel']
-    if include_bisque_fuel:
-        raw_material_cost_total += dummy_costs['bisque_fuel']
-    if include_hassui:
-        raw_material_cost_total += dummy_costs['hassui']
-    if include_paint:
-        raw_material_cost_total += dummy_costs['paint']
-    if include_logo_copper:
-        raw_material_cost_total += dummy_costs['logo_copper']
-    if include_glaze_material:
-        raw_material_cost_total += dummy_costs['glaze_material']
-    if include_main_firing_gas:
-        raw_material_cost_total += dummy_costs['main_firing_gas']
-    if include_transfer_sheet:
-        raw_material_cost_total += dummy_costs['transfer_sheet']
+    if include_dohdai:            raw_material_cost_total += dummy_costs['dohdai']
+    if include_kata:              raw_material_cost_total += dummy_costs['kata']
+    if include_drying_fuel:       raw_material_cost_total += dummy_costs['drying_fuel']
+    if include_bisque_fuel:       raw_material_cost_total += dummy_costs['bisque_fuel']
+    if include_hassui:            raw_material_cost_total += dummy_costs['hassui']
+    if include_paint:             raw_material_cost_total += dummy_costs['paint']
+    if include_logo_copper:       raw_material_cost_total += dummy_costs['logo_copper']
+    if include_glaze_material:    raw_material_cost_total += dummy_costs['glaze_material']
+    if include_main_firing_gas:   raw_material_cost_total += dummy_costs['main_firing_gas']
+    if include_transfer_sheet:    raw_material_cost_total += dummy_costs['transfer_sheet']
     
-    # 原材料費原価率：全体最終合計に対する割合（%）
     raw_material_cost_ratio = (raw_material_cost_total / total_cost * 100) if total_cost > 0 else 0
     # ----- ここまで材料費原価処理 -----
     
-    # 入力内容と材料費計算結果をまとめる
+    # ----- 製造販管費の on/off 項目処理 -----
+    include_chumikin         = request.form.get('include_chumikin')
+    include_shiagechin       = request.form.get('include_shiagechin')
+    include_haiimonochin     = request.form.get('include_haiimonochin')
+    include_soyakeire_dashi  = request.form.get('include_soyakeire_dashi')
+    include_soyakebarimono   = request.form.get('include_soyakebarimono')
+    include_doban_hari       = request.form.get('include_doban_hari')
+    include_hassui_kakouchin = request.form.get('include_hassui_kakouchin')
+    include_etsukechin       = request.form.get('include_etsukechin')
+    include_shiyu_hiyou      = request.form.get('include_shiyu_hiyou')
+    include_kamairi          = request.form.get('include_kamairi')
+    include_kamadashi        = request.form.get('include_kamadashi')
+    include_hamasuri         = request.form.get('include_hamasuri')
+    include_kenpin           = request.form.get('include_kenpin')
+    include_print_kakouchin  = request.form.get('include_print_kakouchin')
+    
+    dummy_manufacturing_costs = {
+        'chumikin': 120,
+        'shiagechin': 150,
+        'haiimonochin': 80,
+        'soyakeire_dashi': 90,
+        'soyakebarimono': 70,
+        'doban_hari': 200,
+        'hassui_kakouchin': 110,
+        'etsukechin': 130,
+        'shiyu_hiyou': 140,
+        'kamairi': 160,
+        'kamadashi': 170,
+        'hamasuri': 100,
+        'kenpin': 90,
+        'print_kakouchin': 180
+    }
+    
+    manufacturing_cost_total = 0
+    if include_chumikin:         manufacturing_cost_total += dummy_manufacturing_costs['chumikin']
+    if include_shiagechin:       manufacturing_cost_total += dummy_manufacturing_costs['shiagechin']
+    if include_haiimonochin:     manufacturing_cost_total += dummy_manufacturing_costs['haiimonochin']
+    if include_soyakeire_dashi:  manufacturing_cost_total += dummy_manufacturing_costs['soyakeire_dashi']
+    if include_soyakebarimono:   manufacturing_cost_total += dummy_manufacturing_costs['soyakebarimono']
+    if include_doban_hari:       manufacturing_cost_total += dummy_manufacturing_costs['doban_hari']
+    if include_hassui_kakouchin: manufacturing_cost_total += dummy_manufacturing_costs['hassui_kakouchin']
+    if include_etsukechin:       manufacturing_cost_total += dummy_manufacturing_costs['etsukechin']
+    if include_shiyu_hiyou:      manufacturing_cost_total += dummy_manufacturing_costs['shiyu_hiyou']
+    if include_kamairi:          manufacturing_cost_total += dummy_manufacturing_costs['kamairi']
+    if include_kamadashi:        manufacturing_cost_total += dummy_manufacturing_costs['kamadashi']
+    if include_hamasuri:         manufacturing_cost_total += dummy_manufacturing_costs['hamasuri']
+    if include_kenpin:           manufacturing_cost_total += dummy_manufacturing_costs['kenpin']
+    if include_print_kakouchin:  manufacturing_cost_total += dummy_manufacturing_costs['print_kakouchin']
+    
+    # 歩留まり係数（ダミー値）
+    yield_coefficient = 0.95
+    manufacturing_cost_ratio = (manufacturing_cost_total / total_cost * 100) if total_cost > 0 else 0
+    # ----- ここまで製造販管費処理 -----
+    
+    # 入力内容と計算結果をまとめる
     dashboard_data = {
         "sales_price": sales_price,
         "order_quantity": order_quantity,
@@ -216,10 +247,13 @@ def dashboard_post():
         "loss_defective": loss_defective,
         "total_cost": total_cost,
         "raw_material_cost_total": raw_material_cost_total,
-        "raw_material_cost_ratio": raw_material_cost_ratio
+        "raw_material_cost_ratio": raw_material_cost_ratio,
+        "manufacturing_cost_total": manufacturing_cost_total,
+        "manufacturing_cost_ratio": manufacturing_cost_ratio,
+        "yield_coefficient": yield_coefficient
     }
     
-    # ログインユーザならDBに登録（activeな見積もりは最大3件まで）
+    # ログインユーザならDBに登録（active見積もりは最大3件まで）
     estimate_id = None
     if 'user_id' in session:
         user_id = session['user_id']
@@ -245,7 +279,6 @@ def dashboard_post():
         conn.commit()
         conn.close()
     
-    # セッションに入力内容とDB登録用のIDを保存
     session['dashboard_data'] = dashboard_data
     session['estimate_id'] = estimate_id
     
@@ -279,7 +312,7 @@ def final_contact():
         dashboard_data = session.get('dashboard_data', {})
         total_cost = dashboard_data.get('total_cost', 0)
         
-        # DB更新：ログインユーザの場合、見積もりの状態を「sent」に更新
+        # DB更新（ログインユーザの場合、見積もり状態を「sent」に更新）
         user_id = session.get('user_id')
         estimate_id = session.get('estimate_id')
         if user_id and estimate_id:
@@ -293,7 +326,6 @@ def final_contact():
             conn.commit()
             conn.close()
         
-        # メール送信用内容（ダッシュボード入力項目および材料費原価の結果を記載）
         body_text = f"""
 お名前: {name}
 企業名: {company}
@@ -308,16 +340,20 @@ def final_contact():
 ロス 不良: {dashboard_data.get('loss_defective')}
 -----------------------------
 最終合計: {total_cost}
-原材料費合計: {dashboard_data.get('raw_material_cost_total')}
-原材料費原価率: {dashboard_data.get('raw_material_cost_ratio'):.2f}%
+【原材料費】
+　原材料費合計: {dashboard_data.get('raw_material_cost_total')}
+　原材料費原価率: {dashboard_data.get('raw_material_cost_ratio'):.2f}%
+-----------------------------
+【製造販管費】
+　歩留まり係数: {dashboard_data.get('yield_coefficient'):.2f}
+　製造販管費合計: {dashboard_data.get('manufacturing_cost_total')}
+　製造販管費原価率: {dashboard_data.get('manufacturing_cost_ratio'):.2f}%
 """
         msg = Message("見積もりお問い合わせ", recipients=["nworks12345@gmail.com"])
         msg.body = body_text
 
-        # 現状、ファイル添付は不要のため実施せず
         mail.send(msg)
 
-        # セッションのダッシュボード関連データをクリア
         for key in ['dashboard_data', 'estimate_id']:
             session.pop(key, None)
 
@@ -330,11 +366,9 @@ def final_contact():
 def history():
     if 'user_id' not in session:
         return "ログインしていません。<br><a href='/login'>ログイン</a>"
-
     user_id = session['user_id']
     conn = get_connection()
     with conn.cursor() as cursor:
-        # active
         cursor.execute("""
           SELECT id, estimate_data, created_at 
             FROM estimates
@@ -344,7 +378,6 @@ def history():
         active_list = cursor.fetchall()
         for row in active_list:
             row['estimate_data'] = json.loads(row['estimate_data'])
-        # deleted
         cursor.execute("""
           SELECT id, estimate_data, created_at, deleted_at
             FROM estimates
@@ -354,7 +387,6 @@ def history():
         deleted_list = cursor.fetchall()
         for row in deleted_list:
             row['estimate_data'] = json.loads(row['estimate_data'])
-        # sent
         cursor.execute("""
           SELECT id, estimate_data, created_at, sent_at
             FROM estimates
@@ -388,10 +420,8 @@ def send_estimate(estid):
         """, (estid, user_id))
         row = cursor.fetchone()
     conn.close()
-
     if not row:
         return "この見積もりは存在しないか、既に削除または送信済みです。"
-
     data = json.loads(row['estimate_data'])
     session['estimate_id']  = estid
     session['dashboard_data'] = data
@@ -418,7 +448,6 @@ def pdf_only(estid):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     user_id = session['user_id']
-
     conn = get_connection()
     with conn.cursor() as cursor:
         cursor.execute("""
@@ -427,12 +456,10 @@ def pdf_only(estid):
         """, (estid, user_id))
         row = cursor.fetchone()
     conn.close()
-
     if not row:
         return "見積もりが見つかりません。"
     if row['status'] != 'deleted':
         return "これは削除済みではありません。"
-
     data = json.loads(row['estimate_data'])
     price = data.get('total_cost', 0)
     return f"<h2>削除済み見積もり (PDFダミー)</h2><p>合計金額: {price} 円</p><p><a href='/history'>戻る</a></p>"
