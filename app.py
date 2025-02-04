@@ -135,10 +135,12 @@ def dashboard_post():
         kiln_count      = int(request.form.get('kiln_count'))
         gas_unit_price  = float(request.form.get('gas_unit_price'))
         loss_defective  = float(request.form.get('loss_defective'))
+        # 追加項目：「ポリ1本で塗れる枚数」
+        poly_count      = int(request.form.get('poly_count'))
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-    # ダミー計算例：各項目の数値を単純に合計して最終合計 (total_cost) とする
+    # ダミー計算例：各基本項目の数値を単純に合計して最終合計 (total_cost) とする
     total_cost = (sales_price + order_quantity + product_weight +
                   mold_unit_price + mold_count + kiln_count +
                   gas_unit_price + loss_defective)
@@ -255,7 +257,7 @@ def dashboard_post():
     sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
     # ----- ここまで 販売管理費処理 -----
     
-    # ----- 全体の出力項目を算出（これらもダッシュボードに組み込みます） -----
+    # ----- 全体出力項目の算出 -----
     # 製造原価 = 原材料費合計 + 製造販管費合計
     production_cost_total = raw_material_cost_total + manufacturing_cost_total
     # 製造原価＋販売管理費
@@ -275,6 +277,7 @@ def dashboard_post():
         "kiln_count": kiln_count,
         "gas_unit_price": gas_unit_price,
         "loss_defective": loss_defective,
+        "poly_count": poly_count,  # ← 新規追加項目
         "total_cost": total_cost,
         # 材料費原価
         "raw_material_cost_total": raw_material_cost_total,
@@ -286,7 +289,7 @@ def dashboard_post():
         # 販売管理費
         "sales_admin_cost_total": sales_admin_cost_total,
         "sales_admin_cost_ratio": sales_admin_cost_ratio,
-        # 全体出力項目（ダッシュボード内に組み込む）
+        # 全体出力項目
         "production_cost_total": production_cost_total,
         "production_plus_sales": production_plus_sales,
         "profit_amount": profit_amount,
@@ -380,6 +383,7 @@ def final_contact():
 　窯入数: {dashboard_data.get('kiln_count')}
 　ガス単価: {dashboard_data.get('gas_unit_price')}
 　ロス 不良: {dashboard_data.get('loss_defective')}
+　ポリ1本で塗れる枚数: {dashboard_data.get('poly_count')}
 　最終合計: {total_cost}
 
 【原材料費】
