@@ -101,11 +101,12 @@ background-color: aliceblue;
 .formbox-0{ 
 color: red; 
 max-width: 100%;
+float: none;
 }
 
 
 .formbox-1{ 
-max-width: 48%;
+max-width: 31%;
 float: left;
 }
 
