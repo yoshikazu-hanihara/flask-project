@@ -9,6 +9,9 @@
 <body>
   <div class="wrapper">
     <h2>ダッシュボード入力</h2>
+
+
+    <div id="nyuuryoku" class="formbox-0">
     <form action="{{ url_for('dashboard_post') }}" method="post">
       <fieldset>
         <legend>ダッシュボード入力項目</legend>
@@ -42,9 +45,12 @@
       </fieldset>
       <input type="submit" value="計算する">
     </form>
+    </div>
 
     <hr>
 
+
+    <div id="zairyougenkahi" class="formbox-1">
     <fieldset>
   <legend>材料費原価 (オン/オフ選択)</legend>
   <label><input type="checkbox" name="include_dohdai" checked> 土代</label><br>
@@ -57,18 +63,21 @@
   <label><input type="checkbox" name="include_glaze_material" checked> 釉薬代</label><br>
   <label><input type="checkbox" name="include_main_firing_gas" checked> 本焼成 ガス代</label><br>
   <label><input type="checkbox" name="include_transfer_sheet"> 転写シート代</label><br>
-</fieldset>
-<!-- 以下、結果表示用（出力専用） -->
+
 <div>
   <p>原材料費合計: （計算後に表示）</p>
   <p>原材料費原価率: （計算後に表示）</p>
 </div>
+</fieldset>
+    </div>
+
+
 
 
     
     <hr>
 
-
+<div id="seizouhannkannhi" class="formbox-1">
     <fieldset>
   <legend>製造販管費 (オン/オフ選択)</legend>
   <label><input type="checkbox" name="include_chumikin" checked> 鋳込み賃</label><br>
@@ -76,39 +85,44 @@
   <label><input type="checkbox" name="include_haiimonochin" checked> 掃いもの賃</label><br>
   <label><input type="checkbox" name="include_soyakeire_dashi" checked> 素焼入れ/出し</label><br>
   <label><input type="checkbox" name="include_soyakebarimono" checked> 素焼払いもの</label><br>
-  <label><input type="checkbox" name="include_doban_hari" checked> 銅版貼り</label><br>
-  <label><input type="checkbox" name="include_hassui_kakouchin" checked> 撥水加工賃</label><br>
-  <label><input type="checkbox" name="include_etsukechin" checked> 絵付け賃</label><br>
+  <label><input type="checkbox" name="include_doban_hari"> 銅版貼り</label><br>
+  <label><input type="checkbox" name="include_hassui_kakouchin"> 撥水加工賃</label><br>
+  <label><input type="checkbox" name="include_etsukechin"> 絵付け賃</label><br>
   <label><input type="checkbox" name="include_shiyu_hiyou" checked> 施釉費</label><br>
   <label><input type="checkbox" name="include_kamairi" checked> 窯入れ作業費</label><br>
   <label><input type="checkbox" name="include_kamadashi" checked> 窯出し作業費</label><br>
   <label><input type="checkbox" name="include_hamasuri" checked> ハマスリ費用</label><br>
   <label><input type="checkbox" name="include_kenpin" checked> 検品費用</label><br>
   <label><input type="checkbox" name="include_print_kakouchin" checked> プリント加工賃</label><br>
-</fieldset>
-<!-- 出力項目 -->
+
 <div>
   <p>歩留まり係数: （計算後に表示）</p>
   <p>製造販管費合計: （計算後に表示）</p>
   <p>製造販管費原価率: （計算後に表示）</p>
 </div>
+</fieldset>
+</div>
+
 
 
     <hr>
 
 
-
+<div id="hannbaikannrihi" class="formbox-1">
 <fieldset>
   <legend>販売管理費 (オン/オフ選択)</legend>
-  <label><input type="checkbox" name="include_nouhin_jinkenhi" checked> 納品（直納）の人件費</label><br>
-  <label><input type="checkbox" name="include_gasoline" checked> ガソリン代</label><br>
+  <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
+  <label><input type="checkbox" name="include_gasoline"> ガソリン代</label><br>
+
+        <div>
+          <p>販売管理費合計: （計算後に表示）</p>
+          <p>販売管理費率: （計算後に表示）</p>
+        </div>
 </fieldset>
-<div>
-  <p>販売管理費合計: （計算後に表示）</p>
-  <p>販売管理費率: （計算後に表示）</p>
 </div>
-
-
+    
+   <hr>
+    
 <div>
 <p>製造原価＋販売管理費: （計算後に表示）</p>
 <p>利益額: （計算後に表示）</p>
