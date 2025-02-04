@@ -132,35 +132,91 @@ def dashboard():
 @app.route('/dashboard_post', methods=['POST'])
 def dashboard_post():
     try:
+        # 入力項目（数値入力）
         sales_price     = float(request.form.get('sales_price'))
         order_quantity  = int(request.form.get('order_quantity'))
         product_weight  = float(request.form.get('product_weight'))
         mold_unit_price = float(request.form.get('mold_unit_price'))
         mold_count      = int(request.form.get('mold_count'))
-        glaze_cost      = float(request.form.get('glaze_cost'))
+        # ※先行していた「釉薬代」はここでは別扱いの材料費項目となるため、
+        # dashboard.html の上部入力項目には含めず、本来の工程用釉薬代との区別とします。
         kiln_count      = int(request.form.get('kiln_count'))
         gas_unit_price  = float(request.form.get('gas_unit_price'))
         loss_defective  = float(request.form.get('loss_defective'))
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-    # ダミー計算例：各項目の数値を合計して最終合計（total_cost）とする
+    # ダミー計算例：各項目の数値を単純に合計して最終合計（total_cost）とする
     total_cost = (sales_price + order_quantity + product_weight +
-                  mold_unit_price + mold_count + glaze_cost +
-                  kiln_count + gas_unit_price + loss_defective)
+                  mold_unit_price + mold_count + kiln_count +
+                  gas_unit_price + loss_defective)
     
-    # 入力内容を辞書にまとめる
+    # ----- ここから材料費原価のon/off項目処理 -----
+    # 各材料費項目はチェックボックスで on/off を選択（チェック時は 'on' が渡る）
+    include_dohdai            = request.form.get('include_dohdai')
+    include_kata              = request.form.get('include_kata')
+    include_drying_fuel       = request.form.get('include_drying_fuel')
+    include_bisque_fuel       = request.form.get('include_bisque_fuel')
+    include_hassui            = request.form.get('include_hassui')
+    include_paint             = request.form.get('include_paint')
+    include_logo_copper       = request.form.get('include_logo_copper')
+    include_glaze_material    = request.form.get('include_glaze_material')
+    include_main_firing_gas   = request.form.get('include_main_firing_gas')
+    include_transfer_sheet    = request.form.get('include_transfer_sheet')
+    
+    # ダミー金額（後日計算式に合わせて修正）
+    dummy_costs = {
+        'dohdai': 100,
+        'kata': 200,
+        'drying_fuel': 300,
+        'bisque_fuel': 400,
+        'hassui': 50,
+        'paint': 150,
+        'logo_copper': 250,
+        'glaze_material': 350,
+        'main_firing_gas': 450,
+        'transfer_sheet': 120
+    }
+    
+    raw_material_cost_total = 0
+    if include_dohdai:
+        raw_material_cost_total += dummy_costs['dohdai']
+    if include_kata:
+        raw_material_cost_total += dummy_costs['kata']
+    if include_drying_fuel:
+        raw_material_cost_total += dummy_costs['drying_fuel']
+    if include_bisque_fuel:
+        raw_material_cost_total += dummy_costs['bisque_fuel']
+    if include_hassui:
+        raw_material_cost_total += dummy_costs['hassui']
+    if include_paint:
+        raw_material_cost_total += dummy_costs['paint']
+    if include_logo_copper:
+        raw_material_cost_total += dummy_costs['logo_copper']
+    if include_glaze_material:
+        raw_material_cost_total += dummy_costs['glaze_material']
+    if include_main_firing_gas:
+        raw_material_cost_total += dummy_costs['main_firing_gas']
+    if include_transfer_sheet:
+        raw_material_cost_total += dummy_costs['transfer_sheet']
+    
+    # 原材料費原価率：全体最終合計に対する割合（%）
+    raw_material_cost_ratio = (raw_material_cost_total / total_cost * 100) if total_cost > 0 else 0
+    # ----- ここまで材料費原価処理 -----
+    
+    # 入力内容と材料費計算結果をまとめる
     dashboard_data = {
         "sales_price": sales_price,
         "order_quantity": order_quantity,
         "product_weight": product_weight,
         "mold_unit_price": mold_unit_price,
         "mold_count": mold_count,
-        "glaze_cost": glaze_cost,
         "kiln_count": kiln_count,
         "gas_unit_price": gas_unit_price,
         "loss_defective": loss_defective,
-        "total_cost": total_cost
+        "total_cost": total_cost,
+        "raw_material_cost_total": raw_material_cost_total,
+        "raw_material_cost_ratio": raw_material_cost_ratio
     }
     
     # ログインユーザならDBに登録（activeな見積もりは最大3件まで）
@@ -237,7 +293,7 @@ def final_contact():
             conn.commit()
             conn.close()
         
-        # メール送信用内容（ダッシュボード入力項目を記載）
+        # メール送信用内容（ダッシュボード入力項目および材料費原価の結果を記載）
         body_text = f"""
 お名前: {name}
 企業名: {company}
@@ -247,16 +303,18 @@ def final_contact():
 製品重量: {dashboard_data.get('product_weight')}
 使用型単価: {dashboard_data.get('mold_unit_price')}
 使用型の数出し数: {dashboard_data.get('mold_count')}
-釉薬代: {dashboard_data.get('glaze_cost')}
 窯入数: {dashboard_data.get('kiln_count')}
 ガス単価: {dashboard_data.get('gas_unit_price')}
 ロス 不良: {dashboard_data.get('loss_defective')}
+-----------------------------
 最終合計: {total_cost}
+原材料費合計: {dashboard_data.get('raw_material_cost_total')}
+原材料費原価率: {dashboard_data.get('raw_material_cost_ratio'):.2f}%
 """
         msg = Message("見積もりお問い合わせ", recipients=["nworks12345@gmail.com"])
         msg.body = body_text
 
-        # ※現状、ファイル添付は不要のため実施せず
+        # 現状、ファイル添付は不要のため実施せず
         mail.send(msg)
 
         # セッションのダッシュボード関連データをクリア
