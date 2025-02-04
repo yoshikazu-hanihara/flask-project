@@ -95,7 +95,27 @@
 
 
     <hr>
-    
+
+
+
+<fieldset>
+  <legend>販売管理費 (オン/オフ選択)</legend>
+  <label><input type="checkbox" name="include_nouhin_jinkenhi" checked> 納品（直納）の人件費</label><br>
+  <label><input type="checkbox" name="include_gasoline" checked> ガソリン代</label><br>
+</fieldset>
+<div>
+  <p>販売管理費合計: （計算後に表示）</p>
+  <p>販売管理費率: （計算後に表示）</p>
+</div>
+
+
+<div>
+<p>製造原価＋販売管理費: （計算後に表示）</p>
+<p>利益額: （計算後に表示）</p>
+<p>利益率: （計算後に表示）</p>
+</div>
+
+    <hr>
 
     
     {% if session.user_id %}
