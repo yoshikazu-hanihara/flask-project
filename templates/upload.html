@@ -3,27 +3,56 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>STLアップロード</title>
+  <title>ダッシュボード入力</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <div class="wrapper">
-  <h2>STLファイル アップロード & 生産数入力</h2>
-  <p>最新の見積もりから３つまで比較検討できます。<br>
-     ※一気に送信された場合のサーバー負荷対策のため</p>
-  <form action="{{ url_for('upload_post') }}" method="post" enctype="multipart/form-data">
-    <label>STLファイル:</label><br>
-    <input type="file" name="file"><br><br>
-    <label>生産数 (1~20000):</label><br>
-    <input type="number" name="quantity" value="1" min="1" max="20000"><br><br>
-    <input type="submit" value="解析する">
-  </form>
-  <hr>
-  {% if session.user_id %}
-    <p><a href="{{ url_for('history') }}">見積もり一覧</a> | <a href="{{ url_for('logout') }}">ログアウト</a></p>
-  {% else %}
-    <p><a href="{{ url_for('login') }}">ログイン</a> (ゲストモード)</p>
-  {% endif %}
+    <h2>ダッシュボード入力</h2>
+    <form action="{{ url_for('dashboard_post') }}" method="post">
+      <fieldset>
+        <legend>ダッシュボード入力項目</legend>
+        
+        <label>売価:</label><br>
+        <input type="number" name="sales_price" step="any" placeholder="例: 1000" required><br><br>
+        
+        <label>発注数:</label><br>
+        <input type="number" name="order_quantity" min="1" placeholder="例: 500" required><br><br>
+        
+        <label>製品重量:</label><br>
+        <input type="number" name="product_weight" step="any" placeholder="例: 2.5" required><br><br>
+        
+        <label>使用型単価:</label><br>
+        <input type="number" name="mold_unit_price" step="any" placeholder="例: 50" required><br><br>
+        
+        <label>使用型の数出し数:</label><br>
+        <input type="number" name="mold_count" min="0" placeholder="例: 3" required><br><br>
+        
+        <label>釉薬代:</label><br>
+        <input type="number" name="glaze_cost" step="any" placeholder="例: 200" required><br><br>
+        
+        <label>窯入数:</label><br>
+        <input type="number" name="kiln_count" min="1" placeholder="例: 100" required><br><br>
+        
+        <label>ガス単価:</label><br>
+        <input type="number" name="gas_unit_price" step="any" placeholder="例: 1.5" required><br><br>
+        
+        <label>ロス 不良:</label><br>
+        <input type="number" name="loss_defective" step="any" placeholder="例: 5" required><br><br>
+      </fieldset>
+      <input type="submit" value="計算する">
+    </form>
+    <hr>
+    {% if session.user_id %}
+      <p>
+        <a href="{{ url_for('history') }}">見積もり一覧</a> |
+        <a href="{{ url_for('logout') }}">ログアウト</a>
+      </p>
+    {% else %}
+      <p>
+        <a href="{{ url_for('login') }}">ログイン</a> (ゲストモード)
+      </p>
+    {% endif %}
   </div>
 </body>
 </html>
