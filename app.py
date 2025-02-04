@@ -135,7 +135,6 @@ def dashboard_post():
         kiln_count      = int(request.form.get('kiln_count'))
         gas_unit_price  = float(request.form.get('gas_unit_price'))
         loss_defective  = float(request.form.get('loss_defective'))
-        # 追加項目：「ポリ1本で塗れる枚数」
         poly_count      = int(request.form.get('poly_count'))
     except Exception as e:
         return "入力値が不正です: " + str(e)
