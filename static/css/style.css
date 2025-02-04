@@ -86,15 +86,16 @@ color: red;
 
 
 #zairyougenkahi{ 
-background-color: blue; 
+background-color: aliceblue; 
+   /*--lightcyan--*/
 }
 
 #seizouhannkannhi{
- background-color: green; 
+ background-color: lightyellow; 
 }
 
 #hannbaikannrihi{
- background-color: red; 
+ background-color: antiquewhite; 
 }
 
 .formbox-0{ 
