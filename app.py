@@ -1,7 +1,6 @@
 # app.py
 from flask import Flask, request, session, render_template, url_for, redirect
 import os, json
-from stl import mesh
 from flask_mail import Mail, Message
 from passlib.hash import bcrypt_sha256
 from datetime import datetime
@@ -15,7 +14,6 @@ from db import get_connection
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # セッションキー
 
-
 # カスタムフィルタの定義
 @app.template_filter('format_thousand')
 def format_thousand(value):
@@ -24,8 +22,6 @@ def format_thousand(value):
         return f"{value:,}"
     except:
         return value
-
-
 
 # Flask-Mail の設定 (Gmail) - 例
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -38,7 +34,7 @@ app.config['MAIL_DEFAULT_SENDER'] = 'nworks12345@gmail.com'
 mail = Mail(app)
 
 ######################################
-# 見積もりロジックの定数・関数
+# （旧）STL解析用定数・関数（現状は未使用）
 ######################################
 CERAMIC_DENSITY = 0.003
 CERAMIC_PRICE_PER_GRAM = 1.2
@@ -54,28 +50,6 @@ def calc_quantity_factor(q):
     if q > 20000: q = 20000
     exponent = (q - 1) / (20000 - 1)
     return factor_max * ((factor_min / factor_max) ** exponent)
-
-# マッピングテーブル類
-PRINT_SIZE_MAP = {
-    'none': 0,
-    'S': 3000,
-    'M': 9000,
-    'L': 15000
-}
-PRINT_COLOR_MAP = {
-    'none': 0,
-    '1': 10000,
-    '2': 15000,
-    '3': 20000
-}
-SPECIAL_SIZE_MAP = {
-    'none': 0,
-    'small': 3000,
-    'medium': 6000,
-    'large': 9000
-}
-GOLD_PLATINUM_FACTOR = 3.0
-GLAZE_UNIT_PRICE = 2.0
 
 ######################################
 # ルーティング (ユーザ関連)
@@ -108,7 +82,7 @@ def login():
             session.clear()
             session['user_id'] = user['id']
             session['email'] = user['email']
-            return redirect(url_for('upload_form'))
+            return redirect(url_for('dashboard'))
         else:
             return "ログイン失敗: メールアドレスまたはパスワードが違います。"
 
@@ -146,46 +120,55 @@ def guest_estimate():
     # ゲストモードフラグを立てる
     session.clear()
     session['guest_mode'] = True
-    return redirect(url_for('upload_form'))
+    return redirect(url_for('dashboard'))
 
 ######################################
-# (ページ1) STLファイルアップロード
+# (ページ1) ダッシュボード入力
 ######################################
-@app.route('/upload')
-def upload_form():
-    return render_template('upload.html')
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
 
-@app.route('/upload_post', methods=['POST'])
-def upload_post():
-    stl_file = request.files.get('file')
-    quantity_str = request.form.get('quantity','1')
-    if not stl_file:
-        return "STLファイルが選択されていません。"
-
+@app.route('/dashboard_post', methods=['POST'])
+def dashboard_post():
     try:
-        quantity = int(quantity_str)
-    except:
-        return "生産数が不正です。"
-
-    # 一時保存
-    temp_path = os.path.join("temp", stl_file.filename)
-    stl_file.save(temp_path)
-
-    # STL解析
-    stl_mesh = mesh.Mesh.from_file(temp_path)
-    volume = float(stl_mesh.get_mass_properties()[0])
-    surface_area = float(stl_mesh.areas.sum())
-    weight = volume * CERAMIC_DENSITY
-    quantity_factor = calc_quantity_factor(quantity)
-    total_ceramic = int(weight * CERAMIC_PRICE_PER_GRAM * quantity_factor * quantity)
-
-    # ログインユーザならDBに登録
+        sales_price     = float(request.form.get('sales_price'))
+        order_quantity  = int(request.form.get('order_quantity'))
+        product_weight  = float(request.form.get('product_weight'))
+        mold_unit_price = float(request.form.get('mold_unit_price'))
+        mold_count      = int(request.form.get('mold_count'))
+        glaze_cost      = float(request.form.get('glaze_cost'))
+        kiln_count      = int(request.form.get('kiln_count'))
+        gas_unit_price  = float(request.form.get('gas_unit_price'))
+        loss_defective  = float(request.form.get('loss_defective'))
+    except Exception as e:
+        return "入力値が不正です: " + str(e)
+    
+    # ダミー計算例：各項目の数値を合計して最終合計（total_cost）とする
+    total_cost = (sales_price + order_quantity + product_weight +
+                  mold_unit_price + mold_count + glaze_cost +
+                  kiln_count + gas_unit_price + loss_defective)
+    
+    # 入力内容を辞書にまとめる
+    dashboard_data = {
+        "sales_price": sales_price,
+        "order_quantity": order_quantity,
+        "product_weight": product_weight,
+        "mold_unit_price": mold_unit_price,
+        "mold_count": mold_count,
+        "glaze_cost": glaze_cost,
+        "kiln_count": kiln_count,
+        "gas_unit_price": gas_unit_price,
+        "loss_defective": loss_defective,
+        "total_cost": total_cost
+    }
+    
+    # ログインユーザならDBに登録（activeな見積もりは最大3件まで）
     estimate_id = None
     if 'user_id' in session:
         user_id = session['user_id']
         conn = get_connection()
         with conn.cursor() as cursor:
-            # active が3件あれば最古を削除状態に
             cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='active'", (user_id,))
             active_count = cursor.fetchone()['cnt']
             if active_count >= 3:
@@ -195,45 +178,22 @@ def upload_post():
                    ORDER BY created_at ASC LIMIT 1
                 """, (user_id,))
                 oldest_id = cursor.fetchone()['id']
-                cursor.execute("UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s",(oldest_id,))
+                cursor.execute("UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s", (oldest_id,))
                 _cleanup_deleted(user_id, cursor)
-
-            # 新規insert
-            estimate_data = {
-                "filename": stl_file.filename,
-                "volume": volume,
-                "surface_area": surface_area,
-                "weight": weight,
-                "quantity": quantity,
-                "ceramic_price": total_ceramic
-            }
             sql = """
               INSERT INTO estimates (user_id, estimate_data, status, sent_at, deleted_at)
               VALUES (%s, %s, 'active', NULL, NULL)
             """
-            cursor.execute(sql, (user_id, json.dumps(estimate_data)))
+            cursor.execute(sql, (user_id, json.dumps(dashboard_data)))
             estimate_id = cursor.lastrowid
         conn.commit()
         conn.close()
-
-    # セッションにも保存
-    session['filename'] = stl_file.filename
-    session['temp_path'] = temp_path
+    
+    # セッションに入力内容とDB登録用のIDを保存
+    session['dashboard_data'] = dashboard_data
     session['estimate_id'] = estimate_id
-    session['volume'] = volume
-    session['surface_area'] = surface_area
-    session['weight'] = weight
-    session['quantity'] = quantity
-    session['ceramic_price'] = total_ceramic
-
-    # 次画面で表示するために
-    return render_template(
-        'upload_result.html',
-        volume=int(volume),
-        weight=int(weight),
-        quantity=quantity,
-        total_ceramic=total_ceramic
-    )
+    
+    return render_template('dashboard_result.html', dashboard_data=dashboard_data)
 
 def _cleanup_deleted(user_id, cursor):
     cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='deleted'", (user_id,))
@@ -249,100 +209,21 @@ def _cleanup_deleted(user_id, cursor):
             cursor.execute("DELETE FROM estimates WHERE id=%s", (oldest['id'],))
 
 ######################################
-# (ページ2) オプション選択
-######################################
-@app.route('/choose_options', methods=['GET','POST'])
-def choose_options():
-    if request.method == 'GET':
-        return render_template('options.html')
-    else:
-        glaze_color = request.form.get('glaze_color','none')
-        print_size = request.form.get('print_size','none')
-        print_color = request.form.get('print_color','none')
-        special_size = request.form.get('special_size','none')
-        special_gold = request.form.get('special_gold')
-
-        base_ceramic = session.get('ceramic_price', 0)
-        quantity_factor = calc_quantity_factor(session.get('quantity',1))
-        surface_area = session.get('surface_area', 0.0)
-
-        # 施釉
-        if glaze_color == 'none':
-            cost_glaze = 0
-        else:
-            color_count = float(glaze_color)
-            base_glaze = surface_area * GLAZE_UNIT_PRICE * color_count
-            cost_glaze = int(base_glaze * quantity_factor)
-
-        # プリント
-        base_print_size = PRINT_SIZE_MAP.get(print_size, 0)
-        base_print_color = PRINT_COLOR_MAP.get(print_color, 0)
-        cost_print = int((base_print_size + base_print_color) * quantity_factor)
-
-        # 特殊加工
-        base_special = SPECIAL_SIZE_MAP.get(special_size, 0)
-        cost_special = base_special * quantity_factor
-        if special_gold == 'yes':
-            cost_special += base_special * GOLD_PLATINUM_FACTOR * quantity_factor
-        cost_special = int(cost_special)
-
-        final_total = base_ceramic + cost_glaze + cost_print + cost_special
-
-        # セッションへ
-        session['cost_glaze'] = cost_glaze
-        session['cost_print'] = cost_print
-        session['cost_special'] = cost_special
-        session['final_total'] = final_total
-
-        # DBにも反映
-        user_id = session.get('user_id')
-        estimate_id = session.get('estimate_id')
-        if user_id and estimate_id:
-            conn = get_connection()
-            with conn.cursor() as cursor:
-                # 既存データにオプション計算を追加
-                cursor.execute("SELECT estimate_data FROM estimates WHERE id=%s AND user_id=%s",(estimate_id, user_id))
-                row = cursor.fetchone()
-                if row:
-                    old_data = json.loads(row['estimate_data'])
-                    old_data['cost_glaze'] = cost_glaze
-                    old_data['cost_print'] = cost_print
-                    old_data['cost_special'] = cost_special
-                    old_data['final_total'] = final_total
-                    cursor.execute("""
-                      UPDATE estimates SET estimate_data=%s
-                        WHERE id=%s AND user_id=%s
-                    """,(json.dumps(old_data), estimate_id, user_id))
-            conn.commit()
-            conn.close()
-
-        return redirect(url_for('final_contact'))
-
-######################################
-# (ページ3) final_contact
+# (ページ2) 問い合わせ（最終確認）画面
 ######################################
 @app.route('/final_contact', methods=['GET','POST'])
 def final_contact():
     if request.method == 'GET':
-        return render_template(
-            'final_contact.html',
-            final_total=session.get('final_total', 0),
-            cost_glaze=session.get('cost_glaze', 0),
-            cost_print=session.get('cost_print', 0),
-            cost_special=session.get('cost_special', 0),
-            filename=session.get('filename', None),
-            quantity=session.get('quantity', 1),
-        )
+        dashboard_data = session.get('dashboard_data', {})
+        return render_template('final_contact.html', dashboard_data=dashboard_data)
     else:
         name = request.form.get('name')
         company = request.form.get('company','')
         email = request.form.get('email')
-        final_total = session.get('final_total', 0)
-        quantity = session.get('quantity', 1)
-
-        filename = session.get('filename', '')
-
-        # DB更新
+        dashboard_data = session.get('dashboard_data', {})
+        total_cost = dashboard_data.get('total_cost', 0)
+        
+        # DB更新：ログインユーザの場合、見積もりの状態を「sent」に更新
         user_id = session.get('user_id')
         estimate_id = session.get('estimate_id')
         if user_id and estimate_id:
@@ -352,54 +233,40 @@ def final_contact():
                   UPDATE estimates
                      SET status='sent', sent_at=NOW()
                    WHERE id=%s AND user_id=%s
-                """,(estimate_id, user_id))
+                """, (estimate_id, user_id))
             conn.commit()
             conn.close()
-
-        # メール送信
-        cost_glaze = session.get('cost_glaze', 0)
-        cost_print = session.get('cost_print', 0)
-        cost_special = session.get('cost_special', 0)
-
+        
+        # メール送信用内容（ダッシュボード入力項目を記載）
         body_text = f"""
 お名前: {name}
 企業名: {company}
 メールアドレス: {email}
-STLファイル名: {filename}
-生産数: {quantity} 個
-施釉(約): {cost_glaze} 円
-プリント(約): {cost_print} 円
-特殊加工(約): {cost_special} 円
-最終合計(約): {final_total} 円
+売価: {dashboard_data.get('sales_price')}
+発注数: {dashboard_data.get('order_quantity')}
+製品重量: {dashboard_data.get('product_weight')}
+使用型単価: {dashboard_data.get('mold_unit_price')}
+使用型の数出し数: {dashboard_data.get('mold_count')}
+釉薬代: {dashboard_data.get('glaze_cost')}
+窯入数: {dashboard_data.get('kiln_count')}
+ガス単価: {dashboard_data.get('gas_unit_price')}
+ロス 不良: {dashboard_data.get('loss_defective')}
+最終合計: {total_cost}
 """
         msg = Message("見積もりお問い合わせ", recipients=["nworks12345@gmail.com"])
         msg.body = body_text
 
-        # STLファイル添付
-        temp_path = session.get('temp_path')
-        if temp_path and os.path.exists(temp_path):
-            with open(temp_path, 'rb') as f:
-                msg.attach(
-                    filename=os.path.basename(temp_path),
-                    content_type="application/sla",
-                    data=f.read()
-                )
+        # ※現状、ファイル添付は不要のため実施せず
         mail.send(msg)
 
-        # 後始末
-        if temp_path and os.path.exists(temp_path):
-            os.remove(temp_path)
-        for key in [
-            'temp_path','estimate_id','volume','surface_area',
-            'weight','quantity','ceramic_price','cost_glaze',
-            'cost_print','cost_special','final_total'
-        ]:
+        # セッションのダッシュボード関連データをクリア
+        for key in ['dashboard_data', 'estimate_id']:
             session.pop(key, None)
 
-        return "<h2>お問い合わせが送信されました。</h2><p><a href='/upload'>新しい見積もり</a> | <a href='/history'>履歴</a> | <a href='/logout'>ログアウト</a></p>"
+        return "<h2>お問い合わせが送信されました。</h2><p><a href='/dashboard'>新しい見積もり</a> | <a href='/history'>履歴</a> | <a href='/logout'>ログアウト</a></p>"
 
 ######################################
-# 履歴画面 (JSONをPython側であらかじめパース)
+# (ページ3) 履歴画面 (JSONをPython側であらかじめパース)
 ######################################
 @app.route('/history')
 def history():
@@ -415,52 +282,44 @@ def history():
             FROM estimates
            WHERE user_id=%s AND status='active'
            ORDER BY created_at DESC
-        """,(user_id,))
+        """, (user_id,))
         active_list = cursor.fetchall()
         for row in active_list:
             row['estimate_data'] = json.loads(row['estimate_data'])
-
         # deleted
         cursor.execute("""
           SELECT id, estimate_data, created_at, deleted_at
             FROM estimates
            WHERE user_id=%s AND status='deleted'
            ORDER BY deleted_at DESC
-        """,(user_id,))
+        """, (user_id,))
         deleted_list = cursor.fetchall()
         for row in deleted_list:
             row['estimate_data'] = json.loads(row['estimate_data'])
-
         # sent
         cursor.execute("""
           SELECT id, estimate_data, created_at, sent_at
             FROM estimates
            WHERE user_id=%s AND status='sent'
            ORDER BY sent_at DESC
-        """,(user_id,))
+        """, (user_id,))
         sent_list = cursor.fetchall()
         for row in sent_list:
             row['estimate_data'] = json.loads(row['estimate_data'])
-
     conn.close()
 
-    return render_template(
-        'history.html',
-        active_list=active_list,
-        deleted_list=deleted_list,
-        sent_list=sent_list
-    )
-
+    return render_template('history.html',
+                           active_list=active_list,
+                           deleted_list=deleted_list,
+                           sent_list=sent_list)
 
 ##########################################
-#「履歴でアクティブな見積もりを選ぶ」→「send_estimate を経由してセッションに再セット」→「既存の final_contact 画面へ」
+# 「履歴でアクティブな見積もりを選ぶ」→「send_estimate を経由してセッションに再セット」→「既存の final_contact 画面へ」
 ##########################################
-
 @app.route('/send_estimate/<int:estid>')
 def send_estimate(estid):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-
     user_id = session['user_id']
     conn = get_connection()
     with conn.cursor() as cursor:
@@ -477,25 +336,8 @@ def send_estimate(estid):
 
     data = json.loads(row['estimate_data'])
     session['estimate_id']  = estid
-    session['filename']     = data.get('filename', '')
-    session['quantity']      = data.get('quantity', 1)
-    session['ceramic_price'] = data.get('ceramic_price', 0)
-    session['cost_glaze']   = data.get('cost_glaze', 0)
-    session['cost_print']   = data.get('cost_print', 0)
-    session['cost_special'] = data.get('cost_special', 0)
-    session['final_total']  = data.get('final_total', 0)
-
+    session['dashboard_data'] = data
     return redirect(url_for('final_contact'))
-
-
-
-
-
-
-
-
-
-
 
 @app.route('/delete_estimate/<int:estid>')
 def delete_estimate(estid):
@@ -507,7 +349,7 @@ def delete_estimate(estid):
         cursor.execute("""
           UPDATE estimates SET status='deleted', deleted_at=NOW()
            WHERE id=%s AND user_id=%s
-        """,(estid, user_id))
+        """, (estid, user_id))
         _cleanup_deleted(user_id, cursor)
     conn.commit()
     conn.close()
@@ -524,7 +366,7 @@ def pdf_only(estid):
         cursor.execute("""
           SELECT estimate_data, status FROM estimates
            WHERE id=%s AND user_id=%s
-        """,(estid, user_id))
+        """, (estid, user_id))
         row = cursor.fetchone()
     conn.close()
 
@@ -534,7 +376,7 @@ def pdf_only(estid):
         return "これは削除済みではありません。"
 
     data = json.loads(row['estimate_data'])
-    price = data.get('ceramic_price', 0)
+    price = data.get('total_cost', 0)
     return f"<h2>削除済み見積もり (PDFダミー)</h2><p>合計金額: {price} 円</p><p><a href='/history'>戻る</a></p>"
 
 ######################################
