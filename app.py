@@ -138,7 +138,7 @@ def dashboard_post():
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-    # ダミー計算例：各項目の数値を合計して最終合計 (total_cost) とする
+    # ダミー計算例：各項目の数値を単純に合計して最終合計 (total_cost) とする
     total_cost = (sales_price + order_quantity + product_weight +
                   mold_unit_price + mold_count + kiln_count +
                   gas_unit_price + loss_defective)
@@ -181,7 +181,7 @@ def dashboard_post():
     if include_transfer_sheet:    raw_material_cost_total += dummy_costs['transfer_sheet']
     
     raw_material_cost_ratio = (raw_material_cost_total / total_cost * 100) if total_cost > 0 else 0
-    # ----- ここまで材料費原価処理 -----
+    # ----- ここまで 材料費原価処理 -----
     
     # ----- 製造販管費の on/off 項目処理 -----
     include_chumikin         = request.form.get('include_chumikin')
@@ -235,7 +235,7 @@ def dashboard_post():
     # 歩留まり係数（ダミー値）
     yield_coefficient = 0.95
     manufacturing_cost_ratio = (manufacturing_cost_total / total_cost * 100) if total_cost > 0 else 0
-    # ----- ここまで製造販管費処理 -----
+    # ----- ここまで 製造販管費処理 -----
     
     # ----- 販売管理費の on/off 項目処理 -----
     include_nouhin_jinkenhi = request.form.get('include_nouhin_jinkenhi')
@@ -253,9 +253,9 @@ def dashboard_post():
         sales_admin_cost_total += dummy_sales_costs['gasoline']
     
     sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
-    # ----- ここまで販売管理費処理 -----
+    # ----- ここまで 販売管理費処理 -----
     
-    # ----- 全体の合計出力（別枠） -----
+    # ----- 全体の出力項目を算出（これらもダッシュボードに組み込みます） -----
     # 製造原価 = 原材料費合計 + 製造販管費合計
     production_cost_total = raw_material_cost_total + manufacturing_cost_total
     # 製造原価＋販売管理費
@@ -263,7 +263,7 @@ def dashboard_post():
     # 利益額 = 総合計 - (製造原価＋販売管理費)
     profit_amount = total_cost - production_plus_sales
     profit_ratio = (profit_amount / total_cost * 100) if total_cost > 0 else 0
-    # ----- ここまで全体の合計出力 -----
+    # ----- ここまで 全体出力項目 -----
     
     # 入力内容と各計算結果をまとめる
     dashboard_data = {
@@ -286,7 +286,7 @@ def dashboard_post():
         # 販売管理費
         "sales_admin_cost_total": sales_admin_cost_total,
         "sales_admin_cost_ratio": sales_admin_cost_ratio,
-        # 全体合計出力
+        # 全体出力項目（ダッシュボード内に組み込む）
         "production_cost_total": production_cost_total,
         "production_plus_sales": production_plus_sales,
         "profit_amount": profit_amount,
@@ -366,7 +366,6 @@ def final_contact():
             conn.commit()
             conn.close()
         
-        # メール送信用内容（ダッシュボード入力項目および各コスト計算結果を記載）
         body_text = f"""
 お名前: {name}
 企業名: {company}
@@ -396,7 +395,7 @@ def final_contact():
 　販売管理費合計: {dashboard_data.get('sales_admin_cost_total')}
 　販売管理費率: {dashboard_data.get('sales_admin_cost_ratio'):.2f}%
 
-【全体合計】
+【全体】
 　製造原価＋販売管理費: {dashboard_data.get('production_plus_sales')}
 　利益額: {dashboard_data.get('profit_amount')}
 　利益率: {dashboard_data.get('profit_ratio'):.2f}%
