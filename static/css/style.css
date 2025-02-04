@@ -102,6 +102,21 @@ background-color: aliceblue;
     height:1000px;
 }
 
+#tohki-goukei{
+    position: fixed;
+    top: 5px;
+    right: 5px;
+    display: block;
+    min-inline-size: min-content;
+    margin-inline: 2px;
+    border-width: 2px;
+    border-style: groove;
+    border-color: threedface;
+    border-image: initial;
+    padding-block: 0.35em 0.625em;
+    padding-inline: 0.75em;
+}
+
 .formbox-0{ 
 max-width: 50%;
 float: none;
