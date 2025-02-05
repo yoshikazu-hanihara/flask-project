@@ -124,7 +124,14 @@ def dashboard_post():
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-  
+
+
+# ダミー計算例：各基本項目の数値を単純に合計して最終合計 (total_cost) とする
+    total_cost = (sales_price + order_quantity + product_weight +
+                  mold_unit_price + mold_count + kiln_count +
+                  gas_unit_price + loss_defective)
+
+
     
     # ----- 材料費原価の on/off 項目処理 -----
 # 各チェックボックスの状態（文字列が返るので存在チェック）
