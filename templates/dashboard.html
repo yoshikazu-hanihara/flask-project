@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ダッシュボード入力</title>
+  <title>陶磁器見積もり入力</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 <div class="wrapper">
-    <h2>ダッシュボード入力</h2>
+    <h2>陶磁器見積もり入力</h2>
 
 
           <div id="nyuuryoku" class="formbox-0">
                   <form action="{{ url_for('dashboard_post') }}" method="post">
                     <fieldset>
-                      <legend>ダッシュボード入力項目</legend>
+                      <legend>陶磁器見積もり入力項目</legend>
                       
                       <label>売価:</label>
                       <input type="number" name="sales_price" step="any" placeholder="例: 1000" required><br><br>
@@ -153,7 +153,7 @@
       </p>
     {% else %}
       <p>
-        <a href="{{ url_for('login') }}">ログイン</a> (ゲストモード)
+        <a href="{{ url_for('login') }}">ログイン</a> (見積もり履歴保存機能)
       </p>
     {% endif %}
   </div>
