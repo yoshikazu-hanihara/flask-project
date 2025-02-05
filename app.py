@@ -124,52 +124,84 @@ def dashboard_post():
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
-    # ダミー計算例：各基本項目の数値を単純に合計して最終合計 (total_cost) とする
-    total_cost = (sales_price + order_quantity + product_weight +
-                  mold_unit_price + mold_count + kiln_count +
-                  gas_unit_price + loss_defective)
+  
     
     # ----- 材料費原価の on/off 項目処理 -----
-    include_dohdai          = request.form.get('include_dohdai')
-    include_kata            = request.form.get('include_kata')
-    include_drying_fuel     = request.form.get('include_drying_fuel')
-    include_bisque_fuel     = request.form.get('include_bisque_fuel')
-    include_hassui          = request.form.get('include_hassui')
-    include_paint           = request.form.get('include_paint')
-    include_logo_copper     = request.form.get('include_logo_copper')
-    include_glaze_material  = request.form.get('include_glaze_material')
-    include_main_firing_gas = request.form.get('include_main_firing_gas')
-    include_transfer_sheet  = request.form.get('include_transfer_sheet')
+# 各チェックボックスの状態（文字列が返るので存在チェック）
+include_dohdai          = request.form.get('include_dohdai')
+include_kata            = request.form.get('include_kata')
+include_drying_fuel     = request.form.get('include_drying_fuel')
+include_bisque_fuel     = request.form.get('include_bisque_fuel')
+include_hassui          = request.form.get('include_hassui')
+include_paint           = request.form.get('include_paint')
+include_logo_copper     = request.form.get('include_logo_copper')
+include_glaze_material  = request.form.get('include_glaze_material')
+include_main_firing_gas = request.form.get('include_main_firing_gas')
+include_transfer_sheet  = request.form.get('include_transfer_sheet')
 
-     # ----------ダミー辞書----
-    dummy_costs = {
-        'dohdai': 100,
-        'kata': 200,
-        'drying_fuel': 300,
-        'bisque_fuel': 400,
-        'hassui': 50,
-        'paint': 150,
-        'logo_copper': 250,
-        'glaze_material': 350,
-        'main_firing_gas': 450,
-        'transfer_sheet': 120
-    }
-    
-    raw_material_cost_total = 0
-    if include_dohdai:            raw_material_cost_total += dummy_costs['dohdai']
-    if include_kata:              raw_material_cost_total += dummy_costs['kata']
-    if include_drying_fuel:       raw_material_cost_total += dummy_costs['drying_fuel']
-    if include_bisque_fuel:       raw_material_cost_total += dummy_costs['bisque_fuel']
-    if include_hassui:            raw_material_cost_total += dummy_costs['hassui']
-    if include_paint:             raw_material_cost_total += dummy_costs['paint']
-    if include_logo_copper:       raw_material_cost_total += dummy_costs['logo_copper']
-    if include_glaze_material:    raw_material_cost_total += dummy_costs['glaze_material']
-    if include_glaze_cost:        raw_material_cost_total += glaze_cost
-    if include_poly_count:        raw_material_cost_total += poly_count
-    if include_main_firing_gas:   raw_material_cost_total += dummy_costs['main_firing_gas']
-    if include_transfer_sheet:    raw_material_cost_total += dummy_costs['transfer_sheet']
-    
-    raw_material_cost_ratio = (raw_material_cost_total / total_cost * 100) if total_cost > 0 else 0
+raw_material_cost_total = 0
+
+# 土代
+if include_dohdai:
+    raw_material_cost_total += product_weight * 0.042 * order_quantity
+
+# 型代（ゼロ除算に注意）
+if include_kata:
+    if mold_count > 0:
+        raw_material_cost_total += (mold_unit_price / mold_count) / 100 * order_quantity
+    else:
+        return "使用型の数出し数が0です。"
+
+# 乾燥燃料費
+if include_drying_fuel:
+    raw_material_cost_total += product_weight * 0.025 * order_quantity
+
+# 素焼き燃料費
+if include_bisque_fuel:
+    raw_material_cost_total += product_weight * 0.04 * order_quantity
+
+# 撥水剤
+if include_hassui:
+    raw_material_cost_total += product_weight * 0.04 * order_quantity
+
+# 絵具代
+if include_paint:
+    raw_material_cost_total += product_weight * 0.05 * order_quantity
+
+# ロゴ 銅板代（ラジオボタンの値を取得）
+if include_logo_copper:
+    try:
+        copper_unit_price = float(request.form.get('copper_unit_price', '0'))
+    except Exception as e:
+        return "銅板の単価が不正です: " + str(e)
+    raw_material_cost_total += copper_unit_price * order_quantity
+
+# 釉薬代
+if include_glaze_material:
+    # poly_count による除算があるので 0 でないか確認
+    if poly_count > 0:
+        raw_material_cost_total += (glaze_cost / poly_count) * order_quantity
+    else:
+        return "ポリ1本で塗れる枚数が0です。"
+
+# 本焼成 ガス代
+if include_main_firing_gas:
+    # kiln_count による除算があるので 0 でないか確認
+    if kiln_count > 0:
+        raw_material_cost_total += (gas_unit_price * 370) / kiln_count * order_quantity
+    else:
+        return "窯入数が0です。"
+
+# 転写シート代（ラジオボタンの値を取得）
+if include_transfer_sheet:
+    try:
+        transfer_sheet_unit_price = float(request.form.get('transfer_sheet_unit_price', '0'))
+    except Exception as e:
+        return "転写の単価が不正です: " + str(e)
+    raw_material_cost_total += transfer_sheet_unit_price * order_quantity
+
+# 原材料費原価率の算出（仕様に合わせ、売価 ÷ 原材料費合計）
+raw_material_cost_ratio = (sales_price / raw_material_cost_total) if raw_material_cost_total > 0 else 0
     # ----- ここまで 材料費原価処理 -----
     
     # ----- 製造販管費の on/off 項目処理 -----
