@@ -226,7 +226,7 @@ raw_material_cost_ratio = (sales_price / raw_material_cost_total) if raw_materia
     include_hamasuri         = request.form.get('include_hamasuri')
     include_kenpin           = request.form.get('include_kenpin')
     include_print_kakouchin  = request.form.get('include_print_kakouchin')
-    
+
     dummy_manufacturing_costs = {
         'chumikin': 120,
         'shiagechin': 150,
