@@ -7,169 +7,185 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<div class="wrapper">
+  <div class="wrapper">
     <h2>陶磁器見積もり入力</h2>
 
+    <!-- 入力フォーム（submitボタンは削除または無効化） -->
+    <div id="nyuuryoku" class="formbox-0">
+      <!-- onsubmit="return false;" として通常送信を防止 -->
+      <form id="calc-form" onsubmit="return false;">
+        <fieldset>
+          <legend>陶磁器見積もり入力項目</legend>
+          
+          <label>売価:</label>
+          <input type="number" name="sales_price" step="any" placeholder="例: 1000" required><br><br>
+          
+          <label>発注数:</label>
+          <input type="number" name="order_quantity" min="1" placeholder="例: 500" required><br><br>
+          
+          <label>製品重量:</label>
+          <input type="number" name="product_weight" step="any" placeholder="例: 2.5" required><br><br>
+          
+          <label>使用型単価:</label>
+          <input type="number" name="mold_unit_price" step="any" placeholder="例: 50" required><br><br>
+          
+          <label>使用型の数出し数:</label>
+          <input type="number" name="mold_count" min="0" placeholder="例: 3" required><br><br>
+          
+          <label>釉薬代:</label>
+          <input type="number" name="glaze_cost" step="any" placeholder="例: 200" required><br><br>
 
-          <div id="nyuuryoku" class="formbox-0">
-                  <form action="{{ url_for('dashboard_post') }}" method="post">
-                    <fieldset>
-                      <legend>陶磁器見積もり入力項目</legend>
-                      
-                      <label>売価:</label>
-                      <input type="number" name="sales_price" step="any" placeholder="例: 1000" required><br><br>
-                      
-                      <label>発注数:</label>
-                      <input type="number" name="order_quantity" min="1" placeholder="例: 500" required><br><br>
-                      
-                      <label>製品重量:</label>
-                      <input type="number" name="product_weight" step="any" placeholder="例: 2.5" required><br><br>
-                      
-                      <label>使用型単価:</label>
-                      <input type="number" name="mold_unit_price" step="any" placeholder="例: 50" required><br><br>
-                      
-                      <label>使用型の数出し数:</label>
-                      <input type="number" name="mold_count" min="0" placeholder="例: 3" required><br><br>
-                      
-                      <label>釉薬代:</label>
-                      <input type="number" name="glaze_cost" step="any" placeholder="例: 200" required><br><br>
+          <label>ポリ1本で塗れる枚数:</label>
+          <input type="number" name="poly_count" required><br><br>
+          
+          <label>窯入数:</label>
+          <input type="number" name="kiln_count" min="1" placeholder="例: 100" required><br><br>
+          
+          <label>ガス単価:</label>
+          <input type="number" name="gas_unit_price" step="any" placeholder="例: 1.5" required><br><br>
+          
+          <label>ロス 不良:</label>
+          <input type="number" name="loss_defective" step="any" placeholder="例: 5" required><br><br>
+        </fieldset>
+        <!-- 「計算する」ボタンは削除するか、非表示に -->
+        <!-- <input type="submit" value="計算する" style="width: 100%;height: 50px;"> -->
+      </form>
+    </div>
 
-                      <label>ポリ1本で塗れる枚数:</label>
-                      <input type="number" name="poly_count" required><br><br>
-                      
-                      <label>窯入数:</label>
-                      <input type="number" name="kiln_count" min="1" placeholder="例: 100" required><br><br>
-                      
-                      <label>ガス単価:</label>
-                      <input type="number" name="gas_unit_price" step="any" placeholder="例: 1.5" required><br><br>
-                      
-                      <label>ロス 不良:</label>
-                      <input type="number" name="loss_defective" step="any" placeholder="例: 5" required><br><br>
-                    </fieldset>
-                <input type="submit" value="計算する" style="width: 100%;height: 50px;">
-              </form>
+    <!-- 結果表示エリア（各項目にid属性を追加） -->
+    <div id="tohki-goukei" class="formbox-0">
+      <p id="production_plus_sales_display">製造原価＋販売管理費: （計算後に表示）</p>
+      <p id="profit_amount_display">利益額: （計算後に表示）</p>
+      <p id="profit_ratio_display">利益率: （計算後に表示）</p>
+    </div>
+
+    <div id="tohki-option">
+      <div id="zairyougenkahi" class="formbox-1">
+        <fieldset>
+          <legend>材料費原価 (オン/オフ選択)</legend>
+          <label><input type="checkbox" name="include_dohdai" checked> 土代</label><br>
+          <label><input type="checkbox" name="include_kata" checked> 型代</label><br>
+          <label><input type="checkbox" name="include_drying_fuel" checked> 乾燥燃料費</label><br>
+          <label><input type="checkbox" name="include_bisque_fuel" checked> 素焼燃料費</label><br>
+          <label><input type="checkbox" name="include_hassui" checked> 撥水剤</label><br>
+          <label><input type="checkbox" name="include_paint"> 絵具代</label><br>
+          <label>
+            <input type="checkbox" name="include_logo_copper"> ロゴ 銅板代
+            <input type="radio" name="copper_unit_price" value="10" checked>10円
+            <input type="radio" name="copper_unit_price" value="20">20円
+            <input type="radio" name="copper_unit_price" value="30">30円
+          </label><br>
+          <label><input type="checkbox" name="include_glaze_material" checked> 釉薬代</label><br>
+          <label><input type="checkbox" name="include_main_firing_gas" checked> 本焼成 ガス代</label><br>
+          <label>
+            <input type="checkbox" name="include_transfer_sheet"> 転写シート代
+            <input type="radio" name="transfer_sheet_unit_price" value="10" checked>10円
+            <input type="radio" name="transfer_sheet_unit_price" value="20">20円
+            <input type="radio" name="transfer_sheet_unit_price" value="30">30円
+          </label><br>
+          <div>
+            <p id="raw_material_cost_total_display">原材料費合計: （計算後に表示）</p>
+            <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
           </div>
+        </fieldset>
+      </div>
 
-
-
-
-
-
-
-
-
-                <div id="tohki-goukei" class="formbox-0">
-                      <p>製造原価＋販売管理費: （計算後に表示）</p>
-                      <p>利益額: （計算後に表示）</p>
-                      <p>利益率: （計算後に表示）</p>
-                </div>
-
-    
-
-
-    
-<div id="tohki-option">
-
-
-            <div id="zairyougenkahi" class="formbox-1">
-                    <fieldset>
-                        <legend>材料費原価 (オン/オフ選択)</legend>
-                        <label><input type="checkbox" name="include_dohdai" checked> 土代</label><br>
-                        <label><input type="checkbox" name="include_kata" checked> 型代</label><br>
-                        <label><input type="checkbox" name="include_drying_fuel" checked> 乾燥燃料費</label><br>
-                        <label><input type="checkbox" name="include_bisque_fuel" checked> 素焼燃料費</label><br>
-                        <label><input type="checkbox" name="include_hassui" checked> 撥水剤</label><br>
-                        <label><input type="checkbox" name="include_paint"> 絵具代</label><br>
-                                  <!-- ロゴ 銅板代：チェックボックスと単価選択 -->
-                                  <label>
-                                      <input type="checkbox" name="include_logo_copper"> ロゴ 銅板代
-                                      <!-- 単価のラジオボタン。初期値は 10円 -->
-                                      <input type="radio" name="copper_unit_price" value="10" checked>10円
-                                      <input type="radio" name="copper_unit_price" value="20">20円
-                                      <input type="radio" name="copper_unit_price" value="30">30円
-                                  </label><br>
-                        <label><input type="checkbox" name="include_glaze_material" checked> 釉薬代</label><br>
-                        <label><input type="checkbox" name="include_main_firing_gas" checked> 本焼成 ガス代</label><br>
-                                  <!-- 転写シート代：チェックボックスと単価選択 -->            
-                                  <label>
-                                          <input type="checkbox" name="include_transfer_sheet"> 転写シート代
-                                          <!-- 単価のラジオボタン。初期値は 10円 -->
-                                          <input type="radio" name="transfer_sheet_unit_price" value="10" checked>10円
-                                          <input type="radio" name="transfer_sheet_unit_price" value="20">20円
-                                          <input type="radio" name="transfer_sheet_unit_price" value="30">30円
-                                  </label><br>
-                
-                            <div>
-                              <p>原材料費合計: （計算後に表示）</p>
-                              <p>原材料費原価率: （計算後に表示）</p>
-                            </div>
-                    </fieldset>
-            </div>
-
-
-
-
-
-
-          <div id="seizouhannkannhi" class="formbox-1">
-                      <fieldset>
-                              <legend>製造販管費 (オン/オフ選択)</legend>
-                              <label><input type="checkbox" name="include_chumikin" checked> 鋳込み賃</label><br>
-                              <label><input type="checkbox" name="include_shiagechin" checked> 仕上げ賃</label><br>
-                              <label><input type="checkbox" name="include_haiimonochin" checked> 掃いもの賃</label><br>
-                              <label><input type="checkbox" name="include_soyakeire_dashi" checked> 素焼入れ/出し</label><br>
-                              <label><input type="checkbox" name="include_soyakebarimono" checked> 素焼払いもの</label><br>
-                              <label><input type="checkbox" name="include_doban_hari"> 銅版貼り</label><br>
-                              <label><input type="checkbox" name="include_hassui_kakouchin"> 撥水加工賃</label><br>
-                              <label><input type="checkbox" name="include_etsukechin"> 絵付け賃</label><br>
-                              <label><input type="checkbox" name="include_shiyu_hiyou" checked> 施釉費</label><br>
-                              <label><input type="checkbox" name="include_kamairi" checked> 窯入れ作業費</label><br>
-                              <label><input type="checkbox" name="include_kamadashi" checked> 窯出し作業費</label><br>
-                              <label><input type="checkbox" name="include_hamasuri" checked> ハマスリ費用</label><br>
-                              <label><input type="checkbox" name="include_kenpin" checked> 検品費用</label><br>
-                              <label><input type="checkbox" name="include_print_kakouchin" checked> プリント加工賃</label><br>
-                  
-                                    <div>
-                                      <p>歩留まり係数: （計算後に表示）</p>
-                                      <p>製造販管費合計: （計算後に表示）</p>
-                                      <p>製造販管費原価率: （計算後に表示）</p>
-                                    </div>
-                      </fieldset>
+      <div id="seizouhannkannhi" class="formbox-1">
+        <fieldset>
+          <legend>製造販管費 (オン/オフ選択)</legend>
+          <label><input type="checkbox" name="include_chumikin" checked> 鋳込み賃</label><br>
+          <label><input type="checkbox" name="include_shiagechin" checked> 仕上げ賃</label><br>
+          <label><input type="checkbox" name="include_haiimonochin" checked> 掃いもの賃</label><br>
+          <label><input type="checkbox" name="include_soyakeire_dashi" checked> 素焼入れ/出し</label><br>
+          <label><input type="checkbox" name="include_soyakebarimono" checked> 素焼払いもの</label><br>
+          <label><input type="checkbox" name="include_doban_hari"> 銅版貼り</label><br>
+          <label><input type="checkbox" name="include_hassui_kakouchin"> 撥水加工賃</label><br>
+          <label><input type="checkbox" name="include_etsukechin"> 絵付け賃</label><br>
+          <label><input type="checkbox" name="include_shiyu_hiyou" checked> 施釉費</label><br>
+          <label><input type="checkbox" name="include_kamairi" checked> 窯入れ作業費</label><br>
+          <label><input type="checkbox" name="include_kamadashi" checked> 窯出し作業費</label><br>
+          <label><input type="checkbox" name="include_hamasuri" checked> ハマスリ費用</label><br>
+          <label><input type="checkbox" name="include_kenpin" checked> 検品費用</label><br>
+          <label><input type="checkbox" name="include_print_kakouchin" checked> プリント加工賃</label><br>
+          <div>
+            <p id="yield_coefficient_display">歩留まり係数: （計算後に表示）</p>
+            <p id="manufacturing_cost_total_display">製造販管費合計: （計算後に表示）</p>
+            <p id="manufacturing_cost_ratio_display">製造販管費原価率: （計算後に表示）</p>
           </div>
+        </fieldset>
+      </div>
 
-
-
-
-
-
-          <div id="hannbaikannrihi" class="formbox-1">
-                  <fieldset>
-                    <legend>販売管理費 (オン/オフ選択)</legend>
-                    <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
-                    <label><input type="checkbox" name="include_gasoline"> ガソリン代</label><br>
-                  
-                          <div>
-                            <p>販売管理費合計: （計算後に表示）</p>
-                            <p>販売管理費率: （計算後に表示）</p>
-                          </div>
-                  </fieldset>
+      <div id="hannbaikannrihi" class="formbox-1">
+        <fieldset>
+          <legend>販売管理費 (オン/オフ選択)</legend>
+          <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
+          <label><input type="checkbox" name="include_gasoline"> ガソリン代</label><br>
+          <div>
+            <p id="sales_admin_cost_total_display">販売管理費合計: （計算後に表示）</p>
+            <p id="sales_admin_cost_ratio_display">販売管理費率: （計算後に表示）</p>
           </div>
-    
+        </fieldset>
+      </div>
+    </div>
 
-</div>
-    
     <hr>
-    
-    {% if session.user_id %}
-      <p>
-        <a href="{{ url_for('history') }}">見積もり一覧</a> |
-        <a href="{{ url_for('logout') }}">ログアウト</a>
-      </p>
-    {% else %}
-      <p>
-        <a href="{{ url_for('login') }}">ログイン</a> (見積もり履歴保存機能)
-      </p>
-    {% endif %}
+    <!-- ログイン等のリンクはそのまま -->
+
   </div>
+
+  <!-- JavaScript：フォーム内の変更を検知して自動計算 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      const form = document.getElementById('calc-form');
+
+      function updateCalculation(){
+        const formData = new FormData(form);
+        fetch('/calculate', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(data => { throw data; });
+          }
+          return response.json();
+        })
+        .then(data => {
+          // 各表示箇所を更新（必要に応じてフォーマットを調整）
+          document.getElementById('production_plus_sales_display').innerText = "製造原価＋販売管理費: " + data.production_plus_sales;
+          document.getElementById('profit_amount_display').innerText = "利益額: " + data.profit_amount;
+          document.getElementById('profit_ratio_display').innerText = "利益率: " + data.profit_ratio.toFixed(2) + "%";
+          document.getElementById('raw_material_cost_total_display').innerText = "原材料費合計: " + data.raw_material_cost_total;
+          document.getElementById('raw_material_cost_ratio_display').innerText = "原材料費原価率: " + data.raw_material_cost_ratio.toFixed(2) + "%";
+          document.getElementById('yield_coefficient_display').innerText = "歩留まり係数: " + data.yield_coefficient.toFixed(2);
+          document.getElementById('manufacturing_cost_total_display').innerText = "製造販管費合計: " + data.manufacturing_cost_total;
+          document.getElementById('manufacturing_cost_ratio_display').innerText = "製造販管費原価率: " + data.manufacturing_cost_ratio.toFixed(2) + "%";
+          document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + data.sales_admin_cost_total;
+          document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
+        })
+        .catch(error => {
+          // 入力不足等の場合、全ての結果欄にエラーメッセージを表示
+          const msg = "入力項目が不十分です";
+          document.getElementById('production_plus_sales_display').innerText = "製造原価＋販売管理費: " + msg;
+          document.getElementById('profit_amount_display').innerText = "利益額: " + msg;
+          document.getElementById('profit_ratio_display').innerText = "利益率: " + msg;
+          document.getElementById('raw_material_cost_total_display').innerText = "原材料費合計: " + msg;
+          document.getElementById('raw_material_cost_ratio_display').innerText = "原材料費原価率: " + msg;
+          document.getElementById('yield_coefficient_display').innerText = "歩留まり係数: " + msg;
+          document.getElementById('manufacturing_cost_total_display').innerText = "製造販管費合計: " + msg;
+          document.getElementById('manufacturing_cost_ratio_display').innerText = "製造販管費原価率: " + msg;
+          document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + msg;
+          document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + msg;
+        });
+      }
+
+      // 入力項目全てに対してイベントリスナーを設定
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('input', updateCalculation);
+        input.addEventListener('change', updateCalculation);
+      });
+    });
+  </script>
 </body>
 </html>
