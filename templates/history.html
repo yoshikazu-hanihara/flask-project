@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>見積もり一覧</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('estimate.static', filename='css/style.css') }}">
 </head>
 <body>
   <div class="wrapper">
@@ -30,8 +30,8 @@
         特殊加工(約): {{ data.cost_special|default(0) | int | format_thousand }} 円<br>
         <b>最終合計(約): {{ data.final_total|default(0) | int | format_thousand }} 円</b><br><br>
 
-        <a href="{{ url_for('delete_estimate', estid=row['id']) }}">この見積もりを削除</a> |
-        <a href="{{ url_for('send_estimate', estid=row['id']) }}">この見積もりを送信する</a>
+        <a href="{{ url_for('estimate.delete_estimate', estid=row['id']) }}">この見積もりを削除</a> |
+        <a href="{{ url_for('estimate.send_estimate', estid=row['id']) }}">この見積もりを送信する</a>
       </div>
     {% endfor %}
   {% endif %}
@@ -50,7 +50,7 @@
           <b>ID:</b> {{ row['id'] }} | 
           <b>合計金額:</b> {{ data.ceramic_price|default(0) }}円 | 
           <b>削除日時:</b> {{ row['deleted_at'] }}<br>
-          <a href="{{ url_for('pdf_only', estid=row['id']) }}">PDFで確認</a>
+          <a href="{{ url_for('estimate.pdf_only', estid=row['id']) }}">PDFで確認</a>
         </div>
       {% endfor %}
     {% endif %}
