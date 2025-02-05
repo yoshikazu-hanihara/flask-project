@@ -275,7 +275,7 @@ def dashboard_post():
                 """, (user_id,))
                 oldest_id = cursor.fetchone()['id']
                 cursor.execute("UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s", (oldest_id,))
-                _cleanup_deleted(user_id, cursor)
+                cleanup_deleted(user_id, cursor)
             sql = """
               INSERT INTO estimates (user_id, estimate_data, status, sent_at, deleted_at)
               VALUES (%s, %s, 'active', NULL, NULL)
