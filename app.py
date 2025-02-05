@@ -5,6 +5,7 @@ from flask_mail import Mail, Message
 from passlib.hash import bcrypt_sha256
 from datetime import datetime
 from auth import auth as auth_blueprint
+from estimate import estimate_blueprint
 
 # DB接続用 (PyMySQL) ※環境に合わせて実装してください
 from db import get_connection
@@ -35,7 +36,7 @@ mail = Mail(app)
 
 # Blueprint の登録（必要に応じて URL のプレフィックスを設定可能）
 app.register_blueprint(auth_blueprint, url_prefix='')
-
+app.register_blueprint(estimate_blueprint, url_prefix='')
 
 ######################################
 # (ページ1) ダッシュボード入力
@@ -567,128 +568,6 @@ def final_contact():
 
         return "<h2>お問い合わせが送信されました。</h2><p><a href='/dashboard'>新しい見積もり</a> | <a href='/history'>履歴</a> | <a href='/logout'>ログアウト</a></p>"
 
-######################################
-# (ページ3) 履歴画面 (JSONをPython側であらかじめパース)
-######################################
-@app.route('/history')
-def history():
-    if 'user_id' not in session:
-        return "ログインしていません。<br><a href='/login'>ログイン</a>"
-    user_id = session['user_id']
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-          SELECT id, estimate_data, created_at 
-            FROM estimates
-           WHERE user_id=%s AND status='active'
-           ORDER BY created_at DESC
-        """, (user_id,))
-        active_list = cursor.fetchall()
-        for row in active_list:
-            row['estimate_data'] = json.loads(row['estimate_data'])
-
-        cursor.execute("""
-          SELECT id, estimate_data, created_at, deleted_at
-            FROM estimates
-           WHERE user_id=%s AND status='deleted'
-           ORDER BY deleted_at DESC
-        """, (user_id,))
-        deleted_list = cursor.fetchall()
-        for row in deleted_list:
-            row['estimate_data'] = json.loads(row['estimate_data'])
-
-        cursor.execute("""
-          SELECT id, estimate_data, created_at, sent_at
-            FROM estimates
-           WHERE user_id=%s AND status='sent'
-           ORDER BY sent_at DESC
-        """, (user_id,))
-        sent_list = cursor.fetchall()
-        for row in sent_list:
-            row['estimate_data'] = json.loads(row['estimate_data'])
-    conn.close()
-
-    return render_template('history.html',
-                           active_list=active_list,
-                           deleted_list=deleted_list,
-                           sent_list=sent_list)
-
-######################################
-# 「履歴でアクティブな見積もりを選ぶ」→「send_estimate を経由してセッションに再セット」→「既存の final_contact 画面へ」
-######################################
-@app.route('/send_estimate/<int:estid>')
-def send_estimate(estid):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user_id = session['user_id']
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-          SELECT estimate_data 
-            FROM estimates
-           WHERE id=%s AND user_id=%s AND status='active'
-        """, (estid, user_id))
-        row = cursor.fetchone()
-    conn.close()
-    if not row:
-        return "この見積もりは存在しないか、既に削除または送信済みです。"
-    data = json.loads(row['estimate_data'])
-    session['estimate_id']  = estid
-    session['dashboard_data'] = data
-    return redirect(url_for('final_contact'))
-
-@app.route('/delete_estimate/<int:estid>')
-def delete_estimate(estid):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user_id = session['user_id']
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-          UPDATE estimates SET status='deleted', deleted_at=NOW()
-           WHERE id=%s AND user_id=%s
-        """, (estid, user_id))
-        _cleanup_deleted(user_id, cursor)
-    conn.commit()
-    conn.close()
-    return redirect(url_for('history'))
-
-@app.route('/pdf_only/<int:estid>')
-def pdf_only(estid):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user_id = session['user_id']
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-          SELECT estimate_data, status FROM estimates
-           WHERE id=%s AND user_id=%s
-        """, (estid, user_id))
-        row = cursor.fetchone()
-    conn.close()
-    if not row:
-        return "見積もりが見つかりません。"
-    if row['status'] != 'deleted':
-        return "これは削除済みではありません。"
-    data = json.loads(row['estimate_data'])
-    price = data.get('total_cost', 0)
-    return f"<h2>削除済み見積もり (PDFダミー)</h2><p>合計金額: {price} 円</p><p><a href='/history'>戻る</a></p>"
-
-######################################
-# 補助関数：削除済みデータのクリーンアップ
-######################################
-def _cleanup_deleted(user_id, cursor):
-    cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='deleted'", (user_id,))
-    del_count = cursor.fetchone()['cnt']
-    if del_count > 30:
-        cursor.execute("""
-          SELECT id FROM estimates
-           WHERE user_id=%s AND status='deleted'
-           ORDER BY deleted_at ASC LIMIT 1
-        """, (user_id,))
-        oldest = cursor.fetchone()
-        if oldest:
-            cursor.execute("DELETE FROM estimates WHERE id=%s", (oldest['id'],))
 
 ######################################
 # メイン
