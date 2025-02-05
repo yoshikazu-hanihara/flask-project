@@ -164,7 +164,8 @@ def dashboard_post():
     if include_paint:             raw_material_cost_total += dummy_costs['paint']
     if include_logo_copper:       raw_material_cost_total += dummy_costs['logo_copper']
     if include_glaze_material:    raw_material_cost_total += dummy_costs['glaze_material']
-    if include_glaze_material:    raw_material_cost_total += glaze_cost
+    if include_glaze_cost:        raw_material_cost_total += glaze_cost
+    if include_poly_count:        raw_material_cost_total += poly_count
     if include_main_firing_gas:   raw_material_cost_total += dummy_costs['main_firing_gas']
     if include_transfer_sheet:    raw_material_cost_total += dummy_costs['transfer_sheet']
     
