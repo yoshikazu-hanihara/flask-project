@@ -4,6 +4,7 @@ import json
 from flask_mail import Mail, Message
 from passlib.hash import bcrypt_sha256
 from datetime import datetime
+from auth import auth as auth_blueprint
 
 # DB接続用 (PyMySQL) ※環境に合わせて実装してください
 from db import get_connection
@@ -32,70 +33,9 @@ app.config['MAIL_PASSWORD'] = 'yspr vktd yrmc wntn'
 app.config['MAIL_DEFAULT_SENDER'] = 'nworks12345@gmail.com'
 mail = Mail(app)
 
-######################################
-# ルーティング (ユーザ関連)
-######################################
-@app.route('/')
-def index():
-    # 最初はログイン画面へ誘導
-    return redirect(url_for('login'))
+# Blueprint の登録（必要に応じて URL のプレフィックスを設定可能）
+app.register_blueprint(auth_blueprint, url_prefix='')
 
-@app.route('/login', methods=['GET','POST'])
-def login():
-    if request.method == 'GET':
-        return render_template('login.html')
-    else:
-        email = request.form.get('email')
-        password = request.form.get('password')
-        if not email or not password:
-            return "メールアドレス / パスワードを入力してください。"
-        conn = get_connection()
-        user = None
-        with conn.cursor() as cursor:
-            sql = "SELECT * FROM users WHERE email=%s"
-            cursor.execute(sql, (email,))
-            user = cursor.fetchone()
-        conn.close()
-        if user and bcrypt_sha256.verify(password, user['password_hash']):
-            session.clear()
-            session['user_id'] = user['id']
-            session['email'] = user['email']
-            return redirect(url_for('dashboard'))
-        else:
-            return "ログイン失敗: メールアドレスまたはパスワードが違います。"
-
-@app.route('/register', methods=['GET','POST'])
-def register():
-    if request.method == 'GET':
-        return render_template('register.html')
-    else:
-        email = request.form.get('email')
-        password = request.form.get('password')
-        if not email or not password:
-            return "必須項目が未入力です。"
-        password_hash = bcrypt_sha256.hash(password)
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, password_hash))
-            conn.commit()
-        except Exception:
-            conn.close()
-            return "登録に失敗しました。既に使われているメールアドレスかもしれません。"
-        conn.close()
-        return redirect(url_for('login'))
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return "ログアウトしました。<br><a href='/login'>ログイン画面へ</a>"
-
-@app.route('/guest_estimate')
-def guest_estimate():
-    # ゲストモードフラグを立てる
-    session.clear()
-    session['guest_mode'] = True
-    return redirect(url_for('dashboard'))
 
 ######################################
 # (ページ1) ダッシュボード入力
