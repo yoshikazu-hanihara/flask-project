@@ -33,23 +33,6 @@ app.config['MAIL_DEFAULT_SENDER'] = 'nworks12345@gmail.com'
 
 mail = Mail(app)
 
-######################################
-# （旧）STL解析用定数・関数（現状は未使用）
-######################################
-CERAMIC_DENSITY = 0.003
-CERAMIC_PRICE_PER_GRAM = 1.2
-
-def calc_quantity_factor(q):
-    """
-    生産数 q に応じて数量係数を可変にする例。
-    q が大きいほど単価が下がる想定で指数関数的に補正。
-    """
-    factor_min = 1.1
-    factor_max = 6.0
-    if q < 1: q = 1
-    if q > 20000: q = 20000
-    exponent = (q - 1) / (20000 - 1)
-    return factor_max * ((factor_min / factor_max) ** exponent)
 
 ######################################
 # ルーティング (ユーザ関連)
