@@ -132,10 +132,12 @@ def dashboard_post():
         product_weight  = float(request.form.get('product_weight'))
         mold_unit_price = float(request.form.get('mold_unit_price'))
         mold_count      = int(request.form.get('mold_count'))
+        glaze_cost      = float(request.form.get('glaze_cost'))
+        poly_count      = int(request.form.get('poly_count'))
         kiln_count      = int(request.form.get('kiln_count'))
         gas_unit_price  = float(request.form.get('gas_unit_price'))
         loss_defective  = float(request.form.get('loss_defective'))
-        poly_count      = int(request.form.get('poly_count'))
+        
     except Exception as e:
         return "入力値が不正です: " + str(e)
     
@@ -155,7 +157,8 @@ def dashboard_post():
     include_glaze_material  = request.form.get('include_glaze_material')
     include_main_firing_gas = request.form.get('include_main_firing_gas')
     include_transfer_sheet  = request.form.get('include_transfer_sheet')
-    
+
+     # ----------ダミー辞書----
     dummy_costs = {
         'dohdai': 100,
         'kata': 200,
@@ -178,6 +181,7 @@ def dashboard_post():
     if include_paint:             raw_material_cost_total += dummy_costs['paint']
     if include_logo_copper:       raw_material_cost_total += dummy_costs['logo_copper']
     if include_glaze_material:    raw_material_cost_total += dummy_costs['glaze_material']
+    if include_glaze_material:    raw_material_cost_total += glaze_cost
     if include_main_firing_gas:   raw_material_cost_total += dummy_costs['main_firing_gas']
     if include_transfer_sheet:    raw_material_cost_total += dummy_costs['transfer_sheet']
     
@@ -276,7 +280,8 @@ def dashboard_post():
         "kiln_count": kiln_count,
         "gas_unit_price": gas_unit_price,
         "loss_defective": loss_defective,
-        "poly_count": poly_count,  # ← 新規追加項目
+        "poly_count": poly_count,
+        "glaze_cost": glaze_cost,
         "total_cost": total_cost,
         # 材料費原価
         "raw_material_cost_total": raw_material_cost_total,
@@ -379,10 +384,11 @@ def final_contact():
 　製品重量: {dashboard_data.get('product_weight')}
 　使用型単価: {dashboard_data.get('mold_unit_price')}
 　使用型の数出し数: {dashboard_data.get('mold_count')}
+  釉薬代: {dashboard_data.get('glaze_cost', 0)}
+　ポリ1本で塗れる枚数: {dashboard_data.get('poly_count')}
 　窯入数: {dashboard_data.get('kiln_count')}
 　ガス単価: {dashboard_data.get('gas_unit_price')}
 　ロス 不良: {dashboard_data.get('loss_defective')}
-　ポリ1本で塗れる枚数: {dashboard_data.get('poly_count')}
 　最終合計: {total_cost}
 
 【原材料費】
