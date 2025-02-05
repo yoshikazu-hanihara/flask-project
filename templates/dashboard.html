@@ -129,7 +129,16 @@
     </div>
 
     <hr>
-    <!-- ログイン等のリンクはそのまま -->
+    {% if session.user_id %}
+      <p>
+        <a href="{{ url_for('history') }}">見積もり一覧</a> |
+        <a href="{{ url_for('logout') }}">ログアウト</a>
+      </p>
+    {% else %}
+      <p>
+        <a href="{{ url_for('login') }}">ログイン</a> (見積もり履歴保存機能)
+      </p>
+    {% endif %}
 
   </div>
 
