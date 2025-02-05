@@ -80,10 +80,24 @@
                         <label><input type="checkbox" name="include_bisque_fuel" checked> 素焼燃料費</label><br>
                         <label><input type="checkbox" name="include_hassui" checked> 撥水剤</label><br>
                         <label><input type="checkbox" name="include_paint"> 絵具代</label><br>
-                        <label><input type="checkbox" name="include_logo_copper"> ロゴ 銅板代</label><br>
+                                  <!-- ロゴ 銅板代：チェックボックスと単価選択 -->
+                                  <label>
+                                      <input type="checkbox" name="include_logo_copper"> ロゴ 銅板代
+                                      <!-- 単価のラジオボタン。初期値は 10円 -->
+                                      <input type="radio" name="copper_unit_price" value="10" checked>10円
+                                      <input type="radio" name="copper_unit_price" value="20">20円
+                                      <input type="radio" name="copper_unit_price" value="30">30円
+                                  </label><br>
                         <label><input type="checkbox" name="include_glaze_material" checked> 釉薬代</label><br>
                         <label><input type="checkbox" name="include_main_firing_gas" checked> 本焼成 ガス代</label><br>
-                        <label><input type="checkbox" name="include_transfer_sheet"> 転写シート代</label><br>
+                                  <!-- 転写シート代：チェックボックスと単価選択 -->            
+                                  <label>
+                                          <input type="checkbox" name="include_transfer_sheet"> 転写シート代
+                                          <!-- 単価のラジオボタン。初期値は 10円 -->
+                                          <input type="radio" name="transfer_sheet_unit_price" value="10" checked>10円
+                                          <input type="radio" name="transfer_sheet_unit_price" value="20">20円
+                                          <input type="radio" name="transfer_sheet_unit_price" value="30">30円
+                                  </label><br>
                 
                             <div>
                               <p>原材料費合計: （計算後に表示）</p>
