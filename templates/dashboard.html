@@ -1,519 +1,279 @@
-from flask import Flask, request, session, render_template, url_for, redirect, jsonify
-import os
-import json
-from flask_mail import Mail, Message
-from passlib.hash import bcrypt_sha256
-from datetime import datetime
-from auth import auth as auth_blueprint
-from estimate import estimate_blueprint
-
-# DB接続用 (PyMySQL) ※環境に合わせて実装してください
-from db import get_connection
-
-######################################
-# 定数・係数一覧（一括管理）
-######################################
-
-# 原材料関連
-DOHDAI_COEFFICIENT = 0.042          # 土代係数
-DRYING_FUEL_COEFFICIENT = 0.025     # 乾燥燃料係数
-BISQUE_FUEL_COEFFICIENT = 0.04      # 素焼き燃料係数
-HASSUI_COEFFICIENT = 0.04           # 撥水剤係数
-PAINT_COEFFICIENT = 0.05            # 絵具係数
-FIRING_GAS_CONSTANT = 370           # 本焼きガス計算時の定数
-MOLD_DIVISOR = 100                  # 型代計算用の割り係数
-
-# 製造原価（例: ダミーの人件費・加工費など）
-DUMMY_MANUFACTURING_COSTS = {
-    'chumikin': 120,
-    'shiagechin': 150,
-    'haiimonochin': 80,
-    'soyakeire_dashi': 90,
-    'soyakebarimono': 70,
-    'doban_hari': 200,
-    'hassui_kakouchin': 110,
-    'etsukechin': 130,
-    'shiyu_hiyou': 140,
-    'kamairi': 160,
-    'kamadashi': 170,
-    'hamasuri': 100,
-    'kenpin': 90,
-    'print_kakouchin': 180
-}
-
-# 販売管理費（例: ダミーの人件費など）
-DUMMY_SALES_COSTS = {
-    'nouhin_jinkenhi': 500,
-    'gasoline': 300
-}
-
-YIELD_COEFFICIENT = 0.95  # 歩留まり係数（仮）
-
-######################################
-# Flask基本設定
-######################################
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # セッションキー
-
-# カスタムフィルタの定義
-@app.template_filter('format_thousand')
-def format_thousand(value):
-    try:
-        value = int(value)
-        return f"{value:,}"
-    except Exception:
-        return value
-
-# Flask-Mail の設定 (Gmail例)
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'nworks12345@gmail.com'
-app.config['MAIL_PASSWORD'] = 'yspr vktd yrmc wntn'
-app.config['MAIL_DEFAULT_SENDER'] = 'nworks12345@gmail.com'
-mail = Mail(app)
-
-# Blueprint の登録（必要に応じて URL のプレフィックスを設定可能）
-app.register_blueprint(auth_blueprint, url_prefix='')
-app.register_blueprint(estimate_blueprint, url_prefix='')
-
-
-######################################
-# (ページ1) ダッシュボード入力
-######################################
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
-@app.route('/dashboard_post', methods=['POST'])
-def dashboard_post():
-    try:
-        # 上部の数値入力項目
-        sales_price     = float(request.form.get('sales_price'))
-        order_quantity  = int(request.form.get('order_quantity'))
-        product_weight  = float(request.form.get('product_weight'))
-        mold_unit_price = float(request.form.get('mold_unit_price'))
-        mold_count      = int(request.form.get('mold_count'))
-        glaze_cost      = float(request.form.get('glaze_cost'))
-        poly_count      = int(request.form.get('poly_count'))
-        kiln_count      = int(request.form.get('kiln_count'))
-        gas_unit_price  = float(request.form.get('gas_unit_price'))
-        loss_defective  = float(request.form.get('loss_defective'))
-    except Exception as e:
-        return "入力値が不正です: " + str(e)
-
-    # ダミー計算例：各基本項目の数値を単純に合計して最終合計 (total_cost) とする
-    total_cost = (
-        sales_price + order_quantity + product_weight +
-        mold_unit_price + mold_count + kiln_count +
-        gas_unit_price + loss_defective
-    )
-
-    # ----- 材料費原価の on/off 項目処理 -----
-    include_dohdai          = request.form.get('include_dohdai')
-    include_kata            = request.form.get('include_kata')
-    include_drying_fuel     = request.form.get('include_drying_fuel')
-    include_bisque_fuel     = request.form.get('include_bisque_fuel')
-    include_hassui          = request.form.get('include_hassui')
-    include_paint           = request.form.get('include_paint')
-    include_logo_copper     = request.form.get('include_logo_copper')
-    include_glaze_material  = request.form.get('include_glaze_material')
-    include_main_firing_gas = request.form.get('include_main_firing_gas')
-    include_transfer_sheet  = request.form.get('include_transfer_sheet')
-
-    raw_material_cost_total = 0
-
-    # 土代
-    if include_dohdai:
-        raw_material_cost_total += product_weight * DOHDAI_COEFFICIENT * order_quantity
-
-    # 型代
-    if include_kata:
-        if mold_count > 0:
-            raw_material_cost_total += (mold_unit_price / mold_count) / MOLD_DIVISOR * order_quantity
-        else:
-            return "使用型の数出し数が0です。"
-
-    # 乾燥燃料費
-    if include_drying_fuel:
-        raw_material_cost_total += product_weight * DRYING_FUEL_COEFFICIENT * order_quantity
-
-    # 素焼き燃料費
-    if include_bisque_fuel:
-        raw_material_cost_total += product_weight * BISQUE_FUEL_COEFFICIENT * order_quantity
-
-    # 撥水剤
-    if include_hassui:
-        raw_material_cost_total += product_weight * HASSUI_COEFFICIENT * order_quantity
-
-    # 絵具代
-    if include_paint:
-        raw_material_cost_total += product_weight * PAINT_COEFFICIENT * order_quantity
-
-    # ロゴ 銅板代
-    if include_logo_copper:
-        try:
-            copper_unit_price = float(request.form.get('copper_unit_price', '0'))
-        except Exception as e:
-            return "銅板の単価が不正です: " + str(e)
-        raw_material_cost_total += copper_unit_price * order_quantity
-
-    # 釉薬代
-    if include_glaze_material:
-        if poly_count > 0:
-            raw_material_cost_total += (glaze_cost / poly_count) * order_quantity
-        else:
-            return "ポリ1本で塗れる枚数が0です。"
-
-    # 本焼成 ガス代
-    if include_main_firing_gas:
-        if kiln_count > 0:
-            raw_material_cost_total += (gas_unit_price * FIRING_GAS_CONSTANT) / kiln_count * order_quantity
-        else:
-            return "窯入数が0です。"
-
-    # 転写シート代
-    if include_transfer_sheet:
-        try:
-            transfer_sheet_unit_price = float(request.form.get('transfer_sheet_unit_price', '0'))
-        except Exception as e:
-            return "転写の単価が不正です: " + str(e)
-        raw_material_cost_total += transfer_sheet_unit_price * order_quantity
-
-    raw_material_cost_ratio = (sales_price / raw_material_cost_total) if raw_material_cost_total > 0 else 0
-
-    # ----- 製造販管費の on/off 項目処理 -----
-    include_chumikin         = request.form.get('include_chumikin')
-    include_shiagechin       = request.form.get('include_shiagechin')
-    include_haiimonochin     = request.form.get('include_haiimonochin')
-    include_soyakeire_dashi  = request.form.get('include_soyakeire_dashi')
-    include_soyakebarimono   = request.form.get('include_soyakebarimono')
-    include_doban_hari       = request.form.get('include_doban_hari')
-    include_hassui_kakouchin = request.form.get('include_hassui_kakouchin')
-    include_etsukechin       = request.form.get('include_etsukechin')
-    include_shiyu_hiyou      = request.form.get('include_shiyu_hiyou')
-    include_kamairi          = request.form.get('include_kamairi')
-    include_kamadashi        = request.form.get('include_kamadashi')
-    include_hamasuri         = request.form.get('include_hamasuri')
-    include_kenpin           = request.form.get('include_kenpin')
-    include_print_kakouchin  = request.form.get('include_print_kakouchin')
-
-    manufacturing_cost_total = 0
-    if include_chumikin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['chumikin']
-    if include_shiagechin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['shiagechin']
-    if include_haiimonochin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['haiimonochin']
-    if include_soyakeire_dashi:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['soyakeire_dashi']
-    if include_soyakebarimono:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['soyakebarimono']
-    if include_doban_hari:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['doban_hari']
-    if include_hassui_kakouchin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['hassui_kakouchin']
-    if include_etsukechin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['etsukechin']
-    if include_shiyu_hiyou:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['shiyu_hiyou']
-    if include_kamairi:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['kamairi']
-    if include_kamadashi:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['kamadashi']
-    if include_hamasuri:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['hamasuri']
-    if include_kenpin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['kenpin']
-    if include_print_kakouchin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['print_kakouchin']
-
-    manufacturing_cost_ratio = (
-        (manufacturing_cost_total / total_cost * 100)
-        if total_cost > 0 else 0
-    )
-
-    # ----- 販売管理費の on/off 項目処理 -----
-    include_nouhin_jinkenhi = request.form.get('include_nouhin_jinkenhi')
-    include_gasoline        = request.form.get('include_gasoline')
-
-    sales_admin_cost_total = 0
-    if include_nouhin_jinkenhi:
-        sales_admin_cost_total += DUMMY_SALES_COSTS['nouhin_jinkenhi']
-    if include_gasoline:
-        sales_admin_cost_total += DUMMY_SALES_COSTS['gasoline']
-
-    sales_admin_cost_ratio = (
-        (sales_admin_cost_total / total_cost * 100)
-        if total_cost > 0 else 0
-    )
-
-    # ----- 全体出力項目の算出 -----
-    production_cost_total = raw_material_cost_total + manufacturing_cost_total
-    production_plus_sales = production_cost_total + sales_admin_cost_total
-    profit_amount = total_cost - production_plus_sales
-    profit_ratio  = (profit_amount / total_cost * 100) if total_cost > 0 else 0
-
-    dashboard_data = {
-        "sales_price": sales_price,
-        "order_quantity": order_quantity,
-        "product_weight": product_weight,
-        "mold_unit_price": mold_unit_price,
-        "mold_count": mold_count,
-        "kiln_count": kiln_count,
-        "gas_unit_price": gas_unit_price,
-        "loss_defective": loss_defective,
-        "poly_count": poly_count,
-        "glaze_cost": glaze_cost,
-        "total_cost": total_cost,
-        # 材料費原価
-        "raw_material_cost_total": raw_material_cost_total,
-        "raw_material_cost_ratio": raw_material_cost_ratio,
-        # 製造販管費
-        "manufacturing_cost_total": manufacturing_cost_total,
-        "manufacturing_cost_ratio": manufacturing_cost_ratio,
-        "yield_coefficient": YIELD_COEFFICIENT,
-        # 販売管理費
-        "sales_admin_cost_total": sales_admin_cost_total,
-        "sales_admin_cost_ratio": sales_admin_cost_ratio,
-        # 全体
-        "production_cost_total": production_cost_total,
-        "production_plus_sales": production_plus_sales,
-        "profit_amount": profit_amount,
-        "profit_ratio": profit_ratio
-    }
-
-    # ログインユーザならDBに登録（active見積もりは最大3件まで）
-    estimate_id = None
-    if 'user_id' in session:
-        user_id = session['user_id']
-        conn = get_connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='active'", (user_id,))
-            active_count = cursor.fetchone()['cnt']
-            if active_count >= 3:
-                cursor.execute("""
-                  SELECT id FROM estimates
-                   WHERE user_id=%s AND status='active'
-                   ORDER BY created_at ASC LIMIT 1
-                """, (user_id,))
-                oldest_id = cursor.fetchone()['id']
-                cursor.execute("UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s", (oldest_id,))
-                # cleanup_deleted が別途定義されている想定
-                cleanup_deleted(user_id, cursor)
-
-            sql = """
-              INSERT INTO estimates (user_id, estimate_data, status, sent_at, deleted_at)
-              VALUES (%s, %s, 'active', NULL, NULL)
-            """
-            cursor.execute(sql, (user_id, json.dumps(dashboard_data)))
-            estimate_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-
-    session['dashboard_data'] = dashboard_data
-    session['estimate_id'] = estimate_id
-
-    return render_template('dashboard_result.html', dashboard_data=dashboard_data)
-
-
-######################################
-# 自動計算用のエンドポイント /calculate
-# （こちらも同様に係数を定数化）
-######################################
-@app.route('/calculate', methods=['POST'])
-def calculate():
-    try:
-        # 必須項目の取得
-        sales_price     = float(request.form.get('sales_price', '').strip())
-        order_quantity  = int(request.form.get('order_quantity', '').strip())
-        product_weight  = float(request.form.get('product_weight', '').strip())
-        mold_unit_price = float(request.form.get('mold_unit_price', '').strip())
-        mold_count      = int(request.form.get('mold_count', '').strip())
-        glaze_cost      = float(request.form.get('glaze_cost', '').strip())
-        poly_count      = int(request.form.get('poly_count', '').strip())
-        kiln_count      = int(request.form.get('kiln_count', '').strip())
-        gas_unit_price  = float(request.form.get('gas_unit_price', '').strip())
-        loss_defective  = float(request.form.get('loss_defective', '').strip())
-    except Exception:
-        return jsonify({"error": "入力項目が不十分です"}), 400
-
-    # ダミー計算例
-    total_cost = (
-        sales_price + order_quantity + product_weight +
-        mold_unit_price + mold_count + kiln_count +
-        gas_unit_price + loss_defective
-    )
-
-    # ----- 材料費原価の on/off 項目処理 -----
-    include_dohdai          = request.form.get('include_dohdai')
-    include_kata            = request.form.get('include_kata')
-    include_drying_fuel     = request.form.get('include_drying_fuel')
-    include_bisque_fuel     = request.form.get('include_bisque_fuel')
-    include_hassui          = request.form.get('include_hassui')
-    include_paint           = request.form.get('include_paint')
-    include_logo_copper     = request.form.get('include_logo_copper')
-    include_glaze_material  = request.form.get('include_glaze_material')
-    include_main_firing_gas = request.form.get('include_main_firing_gas')
-    include_transfer_sheet  = request.form.get('include_transfer_sheet')
-
-    raw_material_cost_total = 0
-
-    if include_dohdai:
-        raw_material_cost_total += product_weight * DOHDAI_COEFFICIENT * order_quantity
-
-    if include_kata:
-        if mold_count > 0:
-            raw_material_cost_total += (mold_unit_price / mold_count) / MOLD_DIVISOR * order_quantity
-        else:
-            return jsonify({"error": "入力項目が不十分です"}), 400
-
-    if include_drying_fuel:
-        raw_material_cost_total += product_weight * DRYING_FUEL_COEFFICIENT * order_quantity
-
-    if include_bisque_fuel:
-        raw_material_cost_total += product_weight * BISQUE_FUEL_COEFFICIENT * order_quantity
-
-    if include_hassui:
-        raw_material_cost_total += product_weight * HASSUI_COEFFICIENT * order_quantity
-
-    if include_paint:
-        raw_material_cost_total += product_weight * PAINT_COEFFICIENT * order_quantity
-
-    if include_logo_copper:
-        try:
-            copper_unit_price = float(request.form.get('copper_unit_price', '0'))
-        except Exception:
-            return jsonify({"error": "入力項目が不十分です"}), 400
-        raw_material_cost_total += copper_unit_price * order_quantity
-
-    if include_glaze_material:
-        if poly_count > 0:
-            raw_material_cost_total += (glaze_cost / poly_count) * order_quantity
-        else:
-            return jsonify({"error": "入力項目が不十分です"}), 400
-
-    if include_main_firing_gas:
-        if kiln_count > 0:
-            raw_material_cost_total += (gas_unit_price * FIRING_GAS_CONSTANT) / kiln_count * order_quantity
-        else:
-            return jsonify({"error": "入力項目が不十分です"}), 400
-
-    if include_transfer_sheet:
-        try:
-            transfer_sheet_unit_price = float(request.form.get('transfer_sheet_unit_price', '0'))
-        except Exception:
-            return jsonify({"error": "入力項目が不十分です"}), 400
-        raw_material_cost_total += transfer_sheet_unit_price * order_quantity
-
-    raw_material_cost_ratio = (
-        (sales_price / raw_material_cost_total)
-        if raw_material_cost_total > 0 else 0
-    )
-
-    # ----- 製造販管費の on/off 項目処理 -----
-    include_chumikin         = request.form.get('include_chumikin')
-    include_shiagechin       = request.form.get('include_shiagechin')
-    include_haiimonochin     = request.form.get('include_haiimonochin')
-    include_soyakeire_dashi  = request.form.get('include_soyakeire_dashi')
-    include_soyakebarimono   = request.form.get('include_soyakebarimono')
-    include_doban_hari       = request.form.get('include_doban_hari')
-    include_hassui_kakouchin = request.form.get('include_hassui_kakouchin')
-    include_etsukechin       = request.form.get('include_etsukechin')
-    include_shiyu_hiyou      = request.form.get('include_shiyu_hiyou')
-    include_kamairi          = request.form.get('include_kamairi')
-    include_kamadashi        = request.form.get('include_kamadashi')
-    include_hamasuri         = request.form.get('include_hamasuri')
-    include_kenpin           = request.form.get('include_kenpin')
-    include_print_kakouchin  = request.form.get('include_print_kakouchin')
-
-    manufacturing_cost_total = 0
-    if include_chumikin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['chumikin']
-    if include_shiagechin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['shiagechin']
-    if include_haiimonochin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['haiimonochin']
-    if include_soyakeire_dashi:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['soyakeire_dashi']
-    if include_soyakebarimono:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['soyakebarimono']
-    if include_doban_hari:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['doban_hari']
-    if include_hassui_kakouchin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['hassui_kakouchin']
-    if include_etsukechin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['etsukechin']
-    if include_shiyu_hiyou:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['shiyu_hiyou']
-    if include_kamairi:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['kamairi']
-    if include_kamadashi:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['kamadashi']
-    if include_hamasuri:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['hamasuri']
-    if include_kenpin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['kenpin']
-    if include_print_kakouchin:
-        manufacturing_cost_total += DUMMY_MANUFACTURING_COSTS['print_kakouchin']
-
-    manufacturing_cost_ratio = (
-        (manufacturing_cost_total / total_cost * 100)
-        if total_cost > 0 else 0
-    )
-
-    # ----- 販売管理費の on/off 項目処理 -----
-    include_nouhin_jinkenhi = request.form.get('include_nouhin_jinkenhi')
-    include_gasoline        = request.form.get('include_gasoline')
-
-    sales_admin_cost_total = 0
-    if include_nouhin_jinkenhi:
-        sales_admin_cost_total += DUMMY_SALES_COSTS['nouhin_jinkenhi']
-    if include_gasoline:
-        sales_admin_cost_total += DUMMY_SALES_COSTS['gasoline']
-
-    sales_admin_cost_ratio = (
-        (sales_admin_cost_total / total_cost * 100)
-        if total_cost > 0 else 0
-    )
-
-    # ----- 全体出力項目の算出 -----
-    production_cost_total = raw_material_cost_total + manufacturing_cost_total
-    production_plus_sales = production_cost_total + sales_admin_cost_total
-    profit_amount = total_cost - production_plus_sales
-    profit_ratio  = (
-        (profit_amount / total_cost * 100)
-        if total_cost > 0 else 0
-    )
-
-    dashboard_data = {
-        "sales_price": sales_price,
-        "order_quantity": order_quantity,
-        "product_weight": product_weight,
-        "mold_unit_price": mold_unit_price,
-        "mold_count": mold_count,
-        "kiln_count": kiln_count,
-        "gas_unit_price": gas_unit_price,
-        "loss_defective": loss_defective,
-        "poly_count": poly_count,
-        "glaze_cost": glaze_cost,
-        "total_cost": total_cost,
-        "raw_material_cost_total": raw_material_cost_total,
-        "raw_material_cost_ratio": raw_material_cost_ratio,
-        "manufacturing_cost_total": manufacturing_cost_total,
-        "manufacturing_cost_ratio": manufacturing_cost_ratio,
-        "yield_coefficient": YIELD_COEFFICIENT,
-        "sales_admin_cost_total": sales_admin_cost_total,
-        "sales_admin_cost_ratio": sales_admin_cost_ratio,
-        "production_cost_total": production_cost_total,
-        "production_plus_sales": production_plus_sales,
-        "profit_amount": profit_amount,
-        "profit_ratio": profit_ratio
-    }
-    return jsonify(dashboard_data)
-
-######################################
-# メイン
-######################################
-if __name__ == '__main__':
-    app.run(debug=True)
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>陶磁器見積もり入力</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="wrapper">
+    <h2>陶磁器見積もり入力</h2>
+
+    <!-- 入力フォーム（submitボタンは削除または無効化） -->
+    <div id="nyuuryoku" class="formbox-0">
+      <form id="calc-form" onsubmit="return false;">
+        <fieldset>
+          <legend>陶磁器見積もり入力項目</legend>
+          
+          <label>売価:</label>
+          <input type="number" name="sales_price" step="any" placeholder="例: 380" required><span>円</span><br><br>
+          
+          <label>発注数:</label>
+          <input type="number" name="order_quantity" min="1" placeholder="例: 1000" required><span>個</span><br><br>
+          
+          <label>製品重量:</label>
+          <input type="number" name="product_weight" step="any" placeholder="例: 200" required><span>g（グラム）</span><br><br>
+          
+          <label>使用型単価:</label>
+          <input type="number" name="mold_unit_price" step="any" placeholder="例: 2500" required><span>円</span><br><br>
+          
+          <label>使用型の数出し数:</label>
+          <input type="number" name="mold_count" min="0" placeholder="例: 2" required><span>個</span><br><br>
+          
+          <label>釉薬代:</label>
+          <input type="number" name="glaze_cost" step="any" placeholder="例: 8500" required><span>円</span><br><br>
+
+          <label>ポリ1本で塗れる枚数:</label>
+          <input type="number" name="poly_count" placeholder="例: 650" required><span>枚</span><br><br>
+          
+          <label>窯入数:</label>
+          <input type="number" name="kiln_count" min="1" placeholder="例: 1760" required><span>個</span><br><br>
+          
+          <label>ガス単価:</label>
+          <input type="number" name="gas_unit_price" step="any" placeholder="例: 140" required><span>円</span><br><br>
+          
+          <label>ロス 不良:</label>
+          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>0.1 = 10%</span><br><br>
+        </fieldset>
+      </form>
+    </div>
+
+    <!-- 結果表示エリア -->
+    <div id="tohki-goukei" class="formbox-0">
+      <p id="production_plus_sales_display">製造原価＋販売管理費: （計算後に表示）</p>
+      <p id="profit_amount_display">利益額: （計算後に表示）</p>
+      <p id="profit_ratio_display">利益率: （計算後に表示）</p>
+    </div>
+
+    <!-- オプション設定（チェックボックスのオン／オフで各項目計算） -->
+    <div id="tohki-option">
+      <div id="zairyougenkahi" class="formbox-1">
+        <fieldset>
+          <legend>材料費原価 (オン/オフ選択)</legend>
+          
+          <div>
+            <label>
+              <input type="checkbox" name="include_dohdai" checked> 土代
+              <span id="dohdai_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_kata" checked> 型代
+              <span id="kata_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_drying_fuel" checked> 乾燥燃料費
+              <span id="drying_fuel_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_bisque_fuel" checked> 素焼燃料費
+              <span id="bisque_fuel_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_hassui" checked> 撥水剤
+              <span id="hassui_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_paint"> 絵具代
+              <span id="paint_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_logo_copper"> ロゴ 銅板代
+              <input type="radio" name="copper_unit_price" value="10" checked>10円
+              <input type="radio" name="copper_unit_price" value="20">20円
+              <input type="radio" name="copper_unit_price" value="30">30円
+              <span id="logo_copper_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_glaze_material" checked> 釉薬代
+              <span id="glaze_material_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_main_firing_gas" checked> 本焼成 ガス代
+              <span id="main_firing_gas_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <div>
+            <label>
+              <input type="checkbox" name="include_transfer_sheet"> 転写シート代
+              <input type="radio" name="transfer_sheet_unit_price" value="10" checked>10円
+              <input type="radio" name="transfer_sheet_unit_price" value="20">20円
+              <input type="radio" name="transfer_sheet_unit_price" value="30">30円
+              <span id="transfer_sheet_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <div>
+            <p id="raw_material_cost_total_display">原材料費合計: （計算後に表示）</p>
+            <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- 以下、製造販管費や販売管理費の設定はそのまま -->
+      <div id="seizouhannkannhi" class="formbox-1">
+        <fieldset>
+          <legend>製造販管費 (オン/オフ選択)</legend>
+          <!-- 各チェックボックス（省略） -->
+          <label><input type="checkbox" name="include_chumikin" checked> 鋳込み賃</label><br>
+          <label><input type="checkbox" name="include_shiagechin" checked> 仕上げ賃</label><br>
+          <label><input type="checkbox" name="include_haiimonochin" checked> 掃いもの賃</label><br>
+          <label><input type="checkbox" name="include_soyakeire_dashi" checked> 素焼入れ/出し</label><br>
+          <label><input type="checkbox" name="include_soyakebarimono" checked> 素焼払いもの</label><br>
+          <label><input type="checkbox" name="include_doban_hari"> 銅版貼り</label><br>
+          <label><input type="checkbox" name="include_hassui_kakouchin"> 撥水加工賃</label><br>
+          <label><input type="checkbox" name="include_etsukechin"> 絵付け賃</label><br>
+          <label><input type="checkbox" name="include_shiyu_hiyou" checked> 施釉費</label><br>
+          <label><input type="checkbox" name="include_kamairi" checked> 窯入れ作業費</label><br>
+          <label><input type="checkbox" name="include_kamadashi" checked> 窯出し作業費</label><br>
+          <label><input type="checkbox" name="include_hamasuri" checked> ハマスリ費用</label><br>
+          <label><input type="checkbox" name="include_kenpin" checked> 検品費用</label><br>
+          <label><input type="checkbox" name="include_print_kakouchin" checked> プリント加工賃</label><br>
+          <div>
+            <p id="yield_coefficient_display">歩留まり係数: （計算後に表示）</p>
+            <p id="manufacturing_cost_total_display">製造販管費合計: （計算後に表示）</p>
+            <p id="manufacturing_cost_ratio_display">製造販管費原価率: （計算後に表示）</p>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="hannbaikannrihi" class="formbox-1">
+        <fieldset>
+          <legend>販売管理費 (オン/オフ選択)</legend>
+          <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
+          <label><input type="checkbox" name="include_gasoline"> ガソリン代</label><br>
+          <div>
+            <p id="sales_admin_cost_total_display">販売管理費合計: （計算後に表示）</p>
+            <p id="sales_admin_cost_ratio_display">販売管理費率: （計算後に表示）</p>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+    <hr>
+    {% if session.user_id %}
+      <p>
+        <a href="{{ url_for('estimate.history') }}">見積もり一覧</a> |
+        <a href="{{ url_for('auth.logout') }}">ログアウト</a>
+      </p>
+    {% else %}
+      <p>
+        <a href="{{ url_for('login') }}">ログイン</a> (見積もり履歴保存機能)
+      </p>
+    {% endif %}
+
+  </div>
+
+  <!-- JavaScript：フォーム内の変更を検知して自動計算 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      const form = document.getElementById('calc-form');
+
+      function updateCalculation(){
+        const formData = new FormData(form);
+        fetch('/calculate', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(data => { throw data; });
+          }
+          return response.json();
+        })
+        .then(data => {
+          // 全体結果の更新
+          document.getElementById('production_plus_sales_display').innerText = "製造原価＋販売管理費: " + data.production_plus_sales;
+          document.getElementById('profit_amount_display').innerText = "利益額: " + data.profit_amount;
+          document.getElementById('profit_ratio_display').innerText = "利益率: " + data.profit_ratio.toFixed(2) + "%";
+          document.getElementById('raw_material_cost_total_display').innerText = "原材料費合計: " + data.raw_material_cost_total;
+          document.getElementById('raw_material_cost_ratio_display').innerText = "原材料費原価率: " + data.raw_material_cost_ratio.toFixed(2) + "%";
+          document.getElementById('yield_coefficient_display').innerText = "歩留まり係数: " + data.yield_coefficient.toFixed(2);
+          document.getElementById('manufacturing_cost_total_display').innerText = "製造販管費合計: " + data.manufacturing_cost_total;
+          document.getElementById('manufacturing_cost_ratio_display').innerText = "製造販管費原価率: " + data.manufacturing_cost_ratio.toFixed(2) + "%";
+          document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + data.sales_admin_cost_total;
+          document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
+
+          // 材料費各項目の更新
+          document.getElementById('dohdai_cost_display').innerText = "合計金額: " + data.dohdai_cost;
+          document.getElementById('kata_cost_display').innerText = "合計金額: " + data.kata_cost;
+          document.getElementById('drying_fuel_cost_display').innerText = "合計金額: " + data.drying_fuel_cost;
+          document.getElementById('bisque_fuel_cost_display').innerText = "合計金額: " + data.bisque_fuel_cost;
+          document.getElementById('hassui_cost_display').innerText = "合計金額: " + data.hassui_cost;
+          document.getElementById('paint_cost_display').innerText = "合計金額: " + data.paint_cost;
+          document.getElementById('logo_copper_cost_display').innerText = "合計金額: " + data.logo_copper_cost;
+          document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + data.glaze_material_cost;
+          document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + data.main_firing_gas_cost;
+          document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + data.transfer_sheet_cost;
+        })
+        .catch(error => {
+          const msg = "入力項目が不十分です";
+          document.getElementById('production_plus_sales_display').innerText = "製造原価＋販売管理費: " + msg;
+          document.getElementById('profit_amount_display').innerText = "利益額: " + msg;
+          document.getElementById('profit_ratio_display').innerText = "利益率: " + msg;
+          document.getElementById('raw_material_cost_total_display').innerText = "原材料費合計: " + msg;
+          document.getElementById('raw_material_cost_ratio_display').innerText = "原材料費原価率: " + msg;
+          document.getElementById('yield_coefficient_display').innerText = "歩留まり係数: " + msg;
+          document.getElementById('manufacturing_cost_total_display').innerText = "製造販管費合計: " + msg;
+          document.getElementById('manufacturing_cost_ratio_display').innerText = "製造販管費原価率: " + msg;
+          document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + msg;
+          document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + msg;
+          
+          // 各原材料項目もエラー表示
+          document.getElementById('dohdai_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('kata_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('drying_fuel_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('bisque_fuel_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('hassui_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('paint_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('logo_copper_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + msg;
+        });
+      }
+
+      // 全ての入力項目にイベントリスナーを設定
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('input', updateCalculation);
+        input.addEventListener('change', updateCalculation);
+      });
+    });
+  </script>
+</body>
+</html>
