@@ -49,6 +49,7 @@
         </fieldset>
 
         <!-- オプション：材料費原価 -->
+        <div id="zairyougenkahi" class="formbox-1">
         <fieldset>
           <legend>材料費原価 (オン/オフ選択)</legend>
           
@@ -132,8 +133,11 @@
             <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
           </div>
         </fieldset>
+        </div>
 
+        
         <!-- オプション：製造販管費 -->
+        <div id="seizouhannkannhi" class="formbox-1">
         <fieldset>
           <legend>製造販管費 (オン/オフ選択)</legend>
           <label><input type="checkbox" name="include_chumikin" checked> 鋳込み賃</label><br>
@@ -156,8 +160,10 @@
             <p id="manufacturing_cost_ratio_display">製造販管費原価率: （計算後に表示）</p>
           </div>
         </fieldset>
+        </div>
 
         <!-- オプション：販売管理費 -->
+        <div id="hannbaikannrihi" class="formbox-1">
         <fieldset>
           <legend>販売管理費 (オン/オフ選択)</legend>
           <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
@@ -167,6 +173,8 @@
             <p id="sales_admin_cost_ratio_display">販売管理費率: （計算後に表示）</p>
           </div>
         </fieldset>
+        </div>
+        
       </form>
     </div>
 
