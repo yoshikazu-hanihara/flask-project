@@ -130,7 +130,15 @@ float: left;
 }
 
 
-
+    .fixed-wage {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      background: #eee;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      font-weight: bold;
+    }
 
 /*--
 a {
