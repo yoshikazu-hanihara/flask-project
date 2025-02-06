@@ -5,15 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>陶磁器見積もり入力</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* 右下に固定する時給表示のスタイル例 */
+    .fixed-wage {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      background: #eee;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <div class="wrapper">
     <h2>陶磁器見積もり入力</h2>
 
-    <!-- すべての入力項目を含むフォーム -->
+    <!-- 入力フォーム：すべての項目（基本数値＋オプション）をひとまとめに -->
     <div id="nyuuryoku" class="formbox-0">
       <form id="calc-form" onsubmit="return false;">
-        <!-- 数値入力項目 -->
+        <!-- 基本入力項目 -->
         <fieldset>
           <legend>陶磁器見積もり入力項目</legend>
           
@@ -45,14 +57,12 @@
           <input type="number" name="gas_unit_price" step="any" placeholder="例: 140" required><span>円</span><br><br>
           
           <label>ロス 不良:</label>
-          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>0.1 = 10%</span><br><br>
+          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>（例：0.1 = 10%）</span><br><br>
         </fieldset>
 
-        <!-- オプション：材料費原価 -->
-        <div id="zairyougenkahi" class="formbox-1">
+        <!-- 材料費原価（そのままの仕様） -->
         <fieldset>
           <legend>材料費原価 (オン/オフ選択)</legend>
-          
           <div>
             <label>
               <input type="checkbox" name="include_dohdai" checked> 土代
@@ -133,37 +143,179 @@
             <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
           </div>
         </fieldset>
-        </div>
 
-        
-        <!-- オプション：製造販管費 -->
-        <div id="seizouhannkannhi" class="formbox-1">
+        <!-- 製造販管費：各項目ごとに新入力欄とラジオ選択を追加 -->
         <fieldset>
           <legend>製造販管費 (オン/オフ選択)</legend>
-          <label><input type="checkbox" name="include_chumikin" checked> 鋳込み賃</label><br>
-          <label><input type="checkbox" name="include_shiagechin" checked> 仕上げ賃</label><br>
-          <label><input type="checkbox" name="include_haiimonochin" checked> 掃いもの賃</label><br>
-          <label><input type="checkbox" name="include_soyakeire_dashi" checked> 素焼入れ/出し</label><br>
-          <label><input type="checkbox" name="include_soyakebarimono" checked> 素焼払いもの</label><br>
-          <label><input type="checkbox" name="include_doban_hari"> 銅版貼り</label><br>
-          <label><input type="checkbox" name="include_hassui_kakouchin"> 撥水加工賃</label><br>
-          <label><input type="checkbox" name="include_etsukechin"> 絵付け賃</label><br>
-          <label><input type="checkbox" name="include_shiyu_hiyou" checked> 施釉費</label><br>
-          <label><input type="checkbox" name="include_kamairi" checked> 窯入れ作業費</label><br>
-          <label><input type="checkbox" name="include_kamadashi" checked> 窯出し作業費</label><br>
-          <label><input type="checkbox" name="include_hamasuri" checked> ハマスリ費用</label><br>
-          <label><input type="checkbox" name="include_kenpin" checked> 検品費用</label><br>
-          <label><input type="checkbox" name="include_print_kakouchin" checked> プリント加工賃</label><br>
+          <!-- 鋳込み賃 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_chumikin" checked> 鋳込み賃
+              <input type="radio" name="chumikin_unit" value="10" checked>10円
+              <input type="radio" name="chumikin_unit" value="20">20円
+              <input type="radio" name="chumikin_unit" value="30">30円
+              <span id="chumikin_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 仕上げ賃 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_shiagechin" checked> 仕上げ賃
+              <input type="radio" name="shiagechin_unit" value="10" checked>10円
+              <input type="radio" name="shiagechin_unit" value="20">20円
+              <input type="radio" name="shiagechin_unit" value="30">30円
+              <span id="shiagechin_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 掃いもの賃 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_haiimonochin" checked> 掃いもの賃
+              <input type="radio" name="haiimonochin_unit" value="10" checked>10円
+              <input type="radio" name="haiimonochin_unit" value="20">20円
+              <input type="radio" name="haiimonochin_unit" value="30">30円
+              <input type="number" name="sawaimono_work" step="any" placeholder="1時間あたりの作業量・掃い" style="width:150px;"> 
+              <span id="haiimonochin_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 生素地検品代 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_seisojiken"> 生素地検品代
+              <input type="radio" name="seisojiken_unit" value="10" checked>10円
+              <input type="radio" name="seisojiken_unit" value="20">20円
+              <input type="radio" name="seisojiken_unit" value="30">30円
+              <input type="number" name="seisojiken_work" step="any" placeholder="1時間あたりの作業量・生素地検品" style="width:150px;"> 
+              <span id="seisojiken_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 素焼入れ/出し -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_soyakeire_dashi" checked> 素焼入れ/出し
+              <input type="radio" name="soyakeire_dashi_unit" value="10" checked>10円
+              <input type="radio" name="soyakeire_dashi_unit" value="20">20円
+              <input type="radio" name="soyakeire_dashi_unit" value="30">30円
+              <input type="number" name="soyakeire_work" step="any" placeholder="1時間あたりの作業量・素焼入出" style="width:150px;">
+              <span id="soyakeire_dashi_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 素焼払いもの -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_soyakebarimono" checked> 素焼払いもの
+              <input type="radio" name="soyakebarimono_unit" value="10" checked>10円
+              <input type="radio" name="soyakebarimono_unit" value="20">20円
+              <input type="radio" name="soyakebarimono_unit" value="30">30円
+              <input type="number" name="soyakebarimono_work" step="any" placeholder="1時間あたりの作業量・素焼払" style="width:150px;">
+              <span id="soyakebarimono_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 銅版貼り -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_doban_hari"> 銅版貼り
+              <input type="radio" name="doban_hari_unit" value="10" checked>10円
+              <input type="radio" name="doban_hari_unit" value="20">20円
+              <input type="radio" name="doban_hari_unit" value="30">30円
+              <input type="number" name="doban_hari_work" step="any" placeholder="1時間あたりの作業量・銅版貼り" style="width:150px;">
+              <span id="doban_hari_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 撥水加工賃 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_hassui_kakouchin"> 撥水加工賃
+              <input type="radio" name="hassui_kakouchin_unit" value="10" checked>10円
+              <input type="radio" name="hassui_kakouchin_unit" value="20">20円
+              <input type="radio" name="hassui_kakouchin_unit" value="30">30円
+              <input type="number" name="hassui_kakouchin_work" step="any" placeholder="1時間あたりの作業量・撥水加工" style="width:150px;">
+              <span id="hassui_kakouchin_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 絵付け賃 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_shiyu_hiyou" checked> 絵付け賃
+              <input type="radio" name="shiyu_hiyou_unit" value="10" checked>10円
+              <input type="radio" name="shiyu_hiyou_unit" value="20">20円
+              <input type="radio" name="shiyu_hiyou_unit" value="30">30円
+              <input type="number" name="shiyu_hiyou_work" step="any" placeholder="1時間あたりの作業量・絵付け" style="width:150px;">
+              <span id="shiyu_hiyou_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 施釉費 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_shiyu_cost"> 施釉費
+              <input type="number" name="shiyu_work" step="any" placeholder="1時間あたりの作業量・施釉" style="width:150px;">
+              <span id="shiyu_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 窯入れ作業費 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_kamairi" checked> 窯入れ作業費
+              <input type="number" name="kamairi_time" step="any" placeholder="窯を立てる時間" style="width:150px;">
+              <span id="kamairi_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 窯出し作業費 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_kamadashi" checked> 窯出し作業費
+              <input type="number" name="kamadashi_time" step="any" placeholder="窯を出す時間" style="width:150px;">
+              <span id="kamadashi_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- ハマスリ費用 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_hamasuri" checked> ハマスリ費用
+              <input type="number" name="hamasuri_time" step="any" placeholder="窯分のハマスリをする時間" style="width:150px;">
+              <span id="hamasuri_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- 検品費用 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_kenpin" checked> 検品費用
+              <input type="number" name="kenpin_time" step="any" placeholder="窯分の検品に要する時間" style="width:150px;">
+              <span id="kenpin_cost_display">合計金額: 0</span>
+            </label>
+          </div>
+          <hr>
+          <!-- プリント加工賃 -->
+          <div>
+            <label>
+              <input type="checkbox" name="include_print_kakouchin" checked> プリント加工賃
+              <input type="radio" name="print_kakouchin_unit" value="10" checked>10円
+              <input type="radio" name="print_kakouchin_unit" value="20">20円
+              <input type="radio" name="print_kakouchin_unit" value="30">30円
+              <span id="print_kakouchin_cost_display">合計金額: 0</span>
+            </label>
+          </div>
           <div>
             <p id="yield_coefficient_display">歩留まり係数: （計算後に表示）</p>
             <p id="manufacturing_cost_total_display">製造販管費合計: （計算後に表示）</p>
             <p id="manufacturing_cost_ratio_display">製造販管費原価率: （計算後に表示）</p>
           </div>
         </fieldset>
-        </div>
 
-        <!-- オプション：販売管理費 -->
-        <div id="hannbaikannrihi" class="formbox-1">
+        <!-- 販売管理費（従来通り） -->
         <fieldset>
           <legend>販売管理費 (オン/オフ選択)</legend>
           <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
@@ -173,8 +325,6 @@
             <p id="sales_admin_cost_ratio_display">販売管理費率: （計算後に表示）</p>
           </div>
         </fieldset>
-        </div>
-        
       </form>
     </div>
 
@@ -197,6 +347,9 @@
       </p>
     {% endif %}
   </div>
+
+  <!-- 固定表示：時給3000円計算 -->
+  <div class="fixed-wage">時給3000円計算</div>
 
   <!-- JavaScript：フォーム内の変更を検知して自動計算 -->
   <script>
@@ -236,6 +389,23 @@
           document.getElementById('hassui_cost_display').innerText = "合計金額: " + data.hassui_cost;
           document.getElementById('paint_cost_display').innerText = "合計金額: " + data.paint_cost;
           document.getElementById('logo_copper_cost_display').innerText = "合計金額: " + data.logo_copper_cost;
+
+          // 製造販管費各項目の更新
+          document.getElementById('chumikin_cost_display').innerText = "合計金額: " + data.chumikin_cost;
+          document.getElementById('shiagechin_cost_display').innerText = "合計金額: " + data.shiagechin_cost;
+          document.getElementById('haiimonochin_cost_display').innerText = "合計金額: " + data.haiimonochin_cost;
+          document.getElementById('seisojiken_cost_display').innerText = "合計金額: " + data.seisojiken_cost;
+          document.getElementById('soyakeire_dashi_cost_display').innerText = "合計金額: " + data.soyakeire_dashi_cost;
+          document.getElementById('soyakebarimono_cost_display').innerText = "合計金額: " + data.soyakebarimono_cost;
+          document.getElementById('doban_hari_cost_display').innerText = "合計金額: " + data.doban_hari_cost;
+          document.getElementById('hassui_kakouchin_cost_display').innerText = "合計金額: " + data.hassui_kakouchin_cost;
+          document.getElementById('shiyu_hiyou_cost_display').innerText = "合計金額: " + data.shiyu_hiyou_cost;
+          document.getElementById('shiyu_cost_display').innerText = "合計金額: " + data.shiyu_cost;
+          document.getElementById('kamairi_cost_display').innerText = "合計金額: " + data.kamairi_cost;
+          document.getElementById('kamadashi_cost_display').innerText = "合計金額: " + data.kamadashi_cost;
+          document.getElementById('hamasuri_cost_display').innerText = "合計金額: " + data.hamasuri_cost;
+          document.getElementById('kenpin_cost_display').innerText = "合計金額: " + data.kenpin_cost;
+          document.getElementById('print_kakouchin_cost_display').innerText = "合計金額: " + data.print_kakouchin_cost;
           document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + data.glaze_material_cost;
           document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + data.main_firing_gas_cost;
           document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + data.transfer_sheet_cost;
@@ -253,21 +423,29 @@
           document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + msg;
           document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + msg;
           
-          // 各原材料項目もエラー表示
-          document.getElementById('dohdai_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('kata_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('drying_fuel_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('bisque_fuel_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('hassui_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('paint_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('logo_copper_cost_display').innerText = "合計金額: " + msg;
+          // 製造販管費各項目もエラー表示
+          document.getElementById('chumikin_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('shiagechin_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('haiimonochin_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('seisojiken_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('soyakeire_dashi_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('soyakebarimono_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('doban_hari_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('hassui_kakouchin_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('shiyu_hiyou_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('shiyu_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('kamairi_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('kamadashi_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('hamasuri_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('kenpin_cost_display').innerText = "合計金額: " + msg;
+          document.getElementById('print_kakouchin_cost_display').innerText = "合計金額: " + msg;
           document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + msg;
           document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + msg;
           document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + msg;
         });
       }
 
-      // 全ての入力項目にイベントリスナーを設定
+      // すべての入力項目にイベントリスナーを設定
       const inputs = form.querySelectorAll('input');
       inputs.forEach(input => {
         input.addEventListener('input', updateCalculation);
