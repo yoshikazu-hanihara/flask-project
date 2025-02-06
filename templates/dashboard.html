@@ -22,7 +22,7 @@
   <div class="wrapper">
     <h2>陶磁器見積もり入力</h2>
 
-    <!-- 入力フォーム：すべての項目（基本数値＋オプション）をひとまとめに -->
+    <!-- すべての入力項目（基本項目＋オプション）をひとまとめにしたフォーム -->
     <div id="nyuuryoku" class="formbox-0">
       <form id="calc-form" onsubmit="return false;">
         <!-- 基本入力項目 -->
@@ -46,7 +46,7 @@
           
           <label>釉薬代:</label>
           <input type="number" name="glaze_cost" step="any" placeholder="例: 8500" required><span>円</span><br><br>
-
+          
           <label>ポリ1本で塗れる枚数:</label>
           <input type="number" name="poly_count" placeholder="例: 650" required><span>枚</span><br><br>
           
@@ -57,10 +57,11 @@
           <input type="number" name="gas_unit_price" step="any" placeholder="例: 140" required><span>円</span><br><br>
           
           <label>ロス 不良:</label>
-          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>（例：0.1 = 10%）</span><br><br>
+          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required>
+          <span>（例：0.1 = 10%）</span><br><br>
         </fieldset>
 
-        <!-- 材料費原価（そのままの仕様） -->
+        <!-- 材料費原価 -->
         <fieldset>
           <legend>材料費原価 (オン/オフ選択)</legend>
           <div>
@@ -144,7 +145,7 @@
           </div>
         </fieldset>
 
-        <!-- 製造販管費：各項目ごとに新入力欄とラジオ選択を追加 -->
+        <!-- 製造販管費 -->
         <fieldset>
           <legend>製造販管費 (オン/オフ選択)</legend>
           <!-- 鋳込み賃 -->
@@ -176,7 +177,7 @@
               <input type="radio" name="haiimonochin_unit" value="10" checked>10円
               <input type="radio" name="haiimonochin_unit" value="20">20円
               <input type="radio" name="haiimonochin_unit" value="30">30円
-              <input type="number" name="sawaimono_work" step="any" placeholder="1時間あたりの作業量・掃い" style="width:150px;"> 
+              <input type="number" name="sawaimono_work" step="any" placeholder="1時間あたりの作業量・掃い" style="width:150px;">
               <span id="haiimonochin_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -188,7 +189,7 @@
               <input type="radio" name="seisojiken_unit" value="10" checked>10円
               <input type="radio" name="seisojiken_unit" value="20">20円
               <input type="radio" name="seisojiken_unit" value="30">30円
-              <input type="number" name="seisojiken_work" step="any" placeholder="1時間あたりの作業量・生素地検品" style="width:150px;"> 
+              <input type="number" name="seisojiken_work" step="any" placeholder="1時間あたりの作業量・生素地検品" style="width:150px;">
               <span id="seisojiken_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -381,7 +382,7 @@
           document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + data.sales_admin_cost_total;
           document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
 
-          // 材料費各項目の更新
+          // 材料費各項目
           document.getElementById('dohdai_cost_display').innerText = "合計金額: " + data.dohdai_cost;
           document.getElementById('kata_cost_display').innerText = "合計金額: " + data.kata_cost;
           document.getElementById('drying_fuel_cost_display').innerText = "合計金額: " + data.drying_fuel_cost;
@@ -389,8 +390,11 @@
           document.getElementById('hassui_cost_display').innerText = "合計金額: " + data.hassui_cost;
           document.getElementById('paint_cost_display').innerText = "合計金額: " + data.paint_cost;
           document.getElementById('logo_copper_cost_display').innerText = "合計金額: " + data.logo_copper_cost;
+          document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + data.glaze_material_cost;
+          document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + data.main_firing_gas_cost;
+          document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + data.transfer_sheet_cost;
 
-          // 製造販管費各項目の更新
+          // 製造販管費各項目
           document.getElementById('chumikin_cost_display').innerText = "合計金額: " + data.chumikin_cost;
           document.getElementById('shiagechin_cost_display').innerText = "合計金額: " + data.shiagechin_cost;
           document.getElementById('haiimonochin_cost_display').innerText = "合計金額: " + data.haiimonochin_cost;
@@ -406,9 +410,6 @@
           document.getElementById('hamasuri_cost_display').innerText = "合計金額: " + data.hamasuri_cost;
           document.getElementById('kenpin_cost_display').innerText = "合計金額: " + data.kenpin_cost;
           document.getElementById('print_kakouchin_cost_display').innerText = "合計金額: " + data.print_kakouchin_cost;
-          document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + data.glaze_material_cost;
-          document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + data.main_firing_gas_cost;
-          document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + data.transfer_sheet_cost;
         })
         .catch(error => {
           const msg = "入力項目が不十分です";
@@ -422,26 +423,6 @@
           document.getElementById('manufacturing_cost_ratio_display').innerText = "製造販管費原価率: " + msg;
           document.getElementById('sales_admin_cost_total_display').innerText = "販売管理費合計: " + msg;
           document.getElementById('sales_admin_cost_ratio_display').innerText = "販売管理費率: " + msg;
-          
-          // 製造販管費各項目もエラー表示
-          document.getElementById('chumikin_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('shiagechin_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('haiimonochin_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('seisojiken_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('soyakeire_dashi_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('soyakebarimono_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('doban_hari_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('hassui_kakouchin_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('shiyu_hiyou_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('shiyu_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('kamairi_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('kamadashi_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('hamasuri_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('kenpin_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('print_kakouchin_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('glaze_material_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('main_firing_gas_cost_display').innerText = "合計金額: " + msg;
-          document.getElementById('transfer_sheet_cost_display').innerText = "合計金額: " + msg;
         });
       }
 
