@@ -14,7 +14,7 @@
     <div id="nyuuryoku" class="formbox-0">
       <!-- onsubmit="return false;" として通常送信を防止 -->
       <form id="calc-form" onsubmit="return false;">
-      <fieldset>
+        <fieldset>
           <legend>陶磁器見積もり入力項目</legend>
           
           <label>売価:</label>
@@ -47,7 +47,8 @@
           <label>ロス 不良:</label>
           <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>0.1 = 10%</span><br><br>
         </fieldset>
-        
+        <!-- 「計算する」ボタンは削除するか、非表示に -->
+        <!-- <input type="submit" value="計算する" style="width: 100%;height: 50px;"> -->
       </form>
     </div>
 
@@ -86,6 +87,16 @@
             <p id="raw_material_cost_total_display">原材料費合計: （計算後に表示）</p>
             <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
           </div>
+
+          <!-- ★ ここに「原材料費 内訳」を表示するブロックを追加 ★ -->
+          <div id="raw_material_breakdown">
+            <h4>原材料費 内訳</h4>
+            <div id="raw_material_details_container">
+              <!-- JavaScriptで動的に生成します -->
+            </div>
+          </div>
+          <!-- ★ ここまで追加 ★ -->
+
         </fieldset>
       </div>
 
