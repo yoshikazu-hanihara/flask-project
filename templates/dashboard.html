@@ -60,7 +60,7 @@
           <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>（例：0.1 = 10%）</span><br><br>
         </fieldset>
 
-        <!-- 材料費原価 (オン/オフ選択) -->
+        <!-- 材料費原価（そのままの仕様） -->
         <fieldset>
           <legend>材料費原価 (オン/オフ選択)</legend>
           <div>
@@ -138,9 +138,7 @@
               <span id="transfer_sheet_cost_display">合計金額: 0</span>
             </label>
           </div>
-          <!-- ★ ここに材料費項目-小計を追加（原材料費合計の上） -->
           <div>
-            <p id="genzairyousyoukei_coefficient_display">材料費項目-小計: （計算後に表示）</p>
             <p id="raw_material_cost_total_display">原材料費合計: （計算後に表示）</p>
             <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
           </div>
@@ -376,21 +374,21 @@
           document.getElementById('profit_amount_display').innerText =
               "利益額: " + data.profit_amount;
           document.getElementById('profit_ratio_display').innerText =
-              "利益率: " + data.profit_ratio + "%";
+              "利益率: " + data.profit_ratio.toFixed(2) + "%";
           document.getElementById('raw_material_cost_total_display').innerText =
               "原材料費合計: " + data.raw_material_cost_total;
           document.getElementById('raw_material_cost_ratio_display').innerText =
-              "原材料費原価率: " + data.raw_material_cost_ratio + "%";
+              "原材料費原価率: " + data.raw_material_cost_ratio.toFixed(2) + "%";
           document.getElementById('yield_coefficient_display').innerText =
-              "歩留まり係数: " + data.yield_coefficient;
+              "歩留まり係数: " + data.yield_coefficient.toFixed(2);
           document.getElementById('manufacturing_cost_total_display').innerText =
               "製造販管費合計: " + data.manufacturing_cost_total;
           document.getElementById('manufacturing_cost_ratio_display').innerText =
-              "製造販管費原価率: " + data.manufacturing_cost_ratio + "%";
+              "製造販管費原価率: " + data.manufacturing_cost_ratio.toFixed(2) + "%";
           document.getElementById('sales_admin_cost_total_display').innerText =
               "販売管理費合計: " + data.sales_admin_cost_total;
           document.getElementById('sales_admin_cost_ratio_display').innerText =
-              "販売管理費率: " + data.sales_admin_cost_ratio + "%";
+              "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
 
           // 材料費各項目の更新
           document.getElementById('dohdai_cost_display').innerText =
@@ -407,16 +405,6 @@
               "合計金額: " + data.paint_cost;
           document.getElementById('logo_copper_cost_display').innerText =
               "合計金額: " + data.logo_copper_cost;
-          document.getElementById('glaze_material_cost_display').innerText =
-              "合計金額: " + data.glaze_material_cost;
-          document.getElementById('main_firing_gas_cost_display').innerText =
-              "合計金額: " + data.main_firing_gas_cost;
-          document.getElementById('transfer_sheet_cost_display').innerText =
-              "合計金額: " + data.transfer_sheet_cost;
-
-          // ★ 材料費項目-小計
-          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
-              "材料費項目-小計: " + data.genzairyousyoukei_coefficient;
 
           // 製造販管費各項目の更新
           document.getElementById('chumikin_cost_display').innerText =
@@ -449,6 +437,16 @@
               "合計金額: " + data.kenpin_cost;
           document.getElementById('print_kakouchin_cost_display').innerText =
               "合計金額: " + data.print_kakouchin_cost;
+          document.getElementById('glaze_material_cost_display').innerText =
+              "合計金額: " + data.glaze_material_cost;
+          document.getElementById('main_firing_gas_cost_display').innerText =
+              "合計金額: " + data.main_firing_gas_cost;
+          document.getElementById('transfer_sheet_cost_display').innerText =
+              "合計金額: " + data.transfer_sheet_cost;
+
+          // ★ 製造項目-小計の表示追加
+          document.getElementById('seizousyoukei_coefficient_display').innerText =
+              "製造項目-小計: " + data.seizousyoukei_coefficient;
         })
         .catch(error => {
           const msg = "入力項目が不十分です";
@@ -472,32 +470,8 @@
               "販売管理費合計: " + msg;
           document.getElementById('sales_admin_cost_ratio_display').innerText =
               "販売管理費率: " + msg;
-
-          // 材料費関連もエラー表示
-          document.getElementById('dohdai_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('kata_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('drying_fuel_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('bisque_fuel_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('hassui_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('paint_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('logo_copper_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('glaze_material_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('main_firing_gas_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('transfer_sheet_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
-              "材料費項目-小計: " + msg;
-
-          // 製造販管費関連もエラー表示
+          
+          // 製造販管費各項目もエラー表示
           document.getElementById('chumikin_cost_display').innerText =
               "合計金額: " + msg;
           document.getElementById('shiagechin_cost_display').innerText =
@@ -528,6 +502,16 @@
               "合計金額: " + msg;
           document.getElementById('print_kakouchin_cost_display').innerText =
               "合計金額: " + msg;
+          document.getElementById('glaze_material_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('main_firing_gas_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('transfer_sheet_cost_display').innerText =
+              "合計金額: " + msg;
+          
+          // ★ 製造項目-小計もエラー表示
+          document.getElementById('seizousyoukei_coefficient_display').innerText =
+              "製造項目-小計: " + msg;
         });
       }
 
