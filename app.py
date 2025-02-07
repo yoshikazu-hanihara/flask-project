@@ -193,7 +193,7 @@ def calculate_raw_material_costs(inp, form):
 
 
     # 材料費項目-小計
-    genzairyousyoukei_coefficient =
+    genzairyousyoukei_coefficient = (
         product_weight * DOHDAI_COEFFICIENT
         + (mold_unit_price / mold_count) / MOLD_DIVISOR
         + product_weight * DRYING_FUEL_COEFFICIENT
@@ -204,6 +204,7 @@ def calculate_raw_material_costs(inp, form):
         + (glaze_cost / poly_count)
         + (gas_unit_price * FIRING_GAS_CONSTANT)
         + transfer_sheet_unit_price
+    )
 
 
 
@@ -228,8 +229,8 @@ def calculate_raw_material_costs(inp, form):
         "main_firing_gas_cost": main_firing_gas_cost,
         "transfer_sheet_cost": transfer_sheet_cost,
         "raw_material_cost_total": raw_material_cost_total,
-        "raw_material_cost_ratio": raw_material_cost_ratio
-        "genzairyousyoukei": seizousyoukei_coefficient
+        "raw_material_cost_ratio": raw_material_cost_ratio,
+        "genzairyousyoukei": genzairyousyoukei_coefficient
     }
 
 
