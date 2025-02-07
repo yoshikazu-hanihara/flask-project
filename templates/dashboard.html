@@ -139,6 +139,7 @@
             </label>
           </div>
           <div>
+            <p id=“genzairyousyoukei_coefficient_display">材料費項目-小計: （計算後に表示）</p>
             <p id="raw_material_cost_total_display">原材料費合計: （計算後に表示）</p>
             <p id="raw_material_cost_ratio_display">原材料費原価率: （計算後に表示）</p>
           </div>
@@ -405,6 +406,10 @@
               "合計金額: " + data.paint_cost;
           document.getElementById('logo_copper_cost_display').innerText =
               "合計金額: " + data.logo_copper_cost;
+          
+          // ★ 材料費項目-小計の表示追加
+          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
+              "材料費項目-小計: " + data.genzairyousyoukei_coefficient;
 
           // 製造販管費各項目の更新
           document.getElementById('chumikin_cost_display').innerText =
@@ -512,6 +517,10 @@
           // ★ 製造項目-小計もエラー表示
           document.getElementById('seizousyoukei_coefficient_display').innerText =
               "製造項目-小計: " + msg;
+          
+          // ★ 材料費項目-小計もエラー表示
+          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
+              "材料費項目-小計: " + msg;
         });
       }
 
