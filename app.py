@@ -405,7 +405,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         print_kakouchin_unit_val = float(form.get('print_kakouchin_unit', '0'))
         print_kakouchin_cost = print_kakouchin_unit_val * order_quantity
 
-    # 製造項目-小計
+    # 製造項目-小計（係数）
     seizousyoukei_coefficient = (
         chumikin_unit
         + shiagechin_unit
@@ -417,11 +417,11 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         + (HOURLY_WAGE / hassui_kakouchin_work if hassui_kakouchin_work > 0 else 0)
         + shiyu_hiyou_unit
         + (HOURLY_WAGE / shiyu_work if shiyu_work > 0 else 0)
-        + (HOURLY_WAGE * kamairi_time)
-        + (HOURLY_WAGE * kamadashi_time)
-        + (HOURLY_WAGE * hamasuri_time)
-        + (HOURLY_WAGE * kenpin_time)
-        + print_kakouchin_unit_val
+        + (HOURLY_WAGE * kamairi_time / kiln_count if kiln_count > 0 else 0)
+        + (HOURLY_WAGE * kamadashi_time / kiln_count if kiln_count > 0 else 0)
+        + (HOURLY_WAGE * hamasuri_time / kiln_count if kiln_count > 0 else 0)
+        + (HOURLY_WAGE * kenpin_time / kiln_count if kiln_count > 0 else 0)
+        + print_kakouchin_unit
     )
 
     # 合計（歩留まり計算前）
