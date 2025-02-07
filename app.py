@@ -197,7 +197,9 @@ def calculate_raw_material_costs(inp, form):
         product_weight * DOHDAI_COEFFICIENT
         + (mold_unit_price / mold_count) / MOLD_DIVISOR
         + product_weight * DRYING_FUEL_COEFFICIENT
-        + product_weight * BISQUE_FUEL_COEFFICIENT + product_weight * HASSUI_COEFFICIENT + product_weight * PAINT_COEFFICIENT
+        + product_weight * BISQUE_FUEL_COEFFICIENT
+        + product_weight * HASSUI_COEFFICIENT
+        + product_weight * PAINT_COEFFICIENT
         + copper_unit_price
         + (glaze_cost / poly_count)
         + (gas_unit_price * FIRING_GAS_CONSTANT)
