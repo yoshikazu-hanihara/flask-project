@@ -52,6 +52,18 @@ def format_thousand(value):
     except Exception:
         return value
 
+######################################
+# 小数点以下を一括で四捨五入する関数
+######################################
+def round_values_in_dict(data, digits=2):
+    """
+    data (dict) 内の float値をすべて小数点以下 digits 桁に四捨五入して更新する。
+    ネストがない単純な辞書を想定。
+    """
+    for key, val in data.items():
+        if isinstance(val, float):
+            data[key] = round(val, digits)
+    return data
 
 ##################################################
 # 1) 入力値の取得・バリデーション用のヘルパー関数
@@ -404,7 +416,6 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         "print_kakouchin_cost": print_kakouchin_cost,
         "yield_coefficient": yield_coefficient,
         "manufacturing_cost_total": manufacturing_cost_total_with_loss,
-        # 追加: 製造項目-小計
         "seizousyoukei_coefficient": seizousyoukei_coefficient
     }
 
@@ -526,7 +537,7 @@ def assemble_dashboard_data(
         "manufacturing_cost_total": manufacturing_cost_total,
         "manufacturing_cost_ratio": manufacturing_cost_ratio,
 
-        # ★ 製造項目-小計
+        # 製造項目-小計
         "seizousyoukei_coefficient": man_dict["seizousyoukei_coefficient"],
 
         # 販売管理費
@@ -585,6 +596,9 @@ def dashboard_post():
 
     # 4) 結果まとめ
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
+
+    # ★ 小数点以下2桁に四捨五入
+    round_values_in_dict(dashboard_data, digits=2)
 
     # DB登録など (必要に応じて)
     estimate_id = None
@@ -653,6 +667,9 @@ def calculate():
 
     # 4) 組み立て
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
+
+    # ★ 小数点以下2桁に四捨五入
+    round_values_in_dict(dashboard_data, digits=2)
 
     return jsonify(dashboard_data)
 
