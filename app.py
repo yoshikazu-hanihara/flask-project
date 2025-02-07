@@ -191,6 +191,20 @@ def calculate_raw_material_costs(inp, form):
             raise ValueError("転写シート単価が不正です。")
         transfer_sheet_cost = transfer_sheet_unit_price * order_quantity
 
+
+    # 材料費項目-小計
+    genzairyousyoukei_coefficient =
+        product_weight * DOHDAI_COEFFICIENT
+        + (mold_unit_price / mold_count) / MOLD_DIVISOR
+        + product_weight * DRYING_FUEL_COEFFICIENT
+        + product_weight * BISQUE_FUEL_COEFFICIENT + product_weight * HASSUI_COEFFICIENT + product_weight * PAINT_COEFFICIENT
+        + copper_unit_price
+        + (glaze_cost / poly_count)
+        + (gas_unit_price * FIRING_GAS_CONSTANT)
+        + transfer_sheet_unit_price
+
+
+
     raw_material_cost_total = (
         dohdai_cost + kata_cost + drying_fuel_cost + bisque_fuel_cost
         + hassui_cost + paint_cost + logo_copper_cost
@@ -213,6 +227,7 @@ def calculate_raw_material_costs(inp, form):
         "transfer_sheet_cost": transfer_sheet_cost,
         "raw_material_cost_total": raw_material_cost_total,
         "raw_material_cost_ratio": raw_material_cost_ratio
+        "genzairyousyoukei": seizousyoukei_coefficient
     }
 
 
@@ -516,6 +531,7 @@ def assemble_dashboard_data(
         "glaze_material_cost": raw_dict["glaze_material_cost"],
         "main_firing_gas_cost": raw_dict["main_firing_gas_cost"],
         "transfer_sheet_cost": raw_dict["transfer_sheet_cost"],
+        "genzairyousyoukei_coefficient": man_dict["genzairyousyoukei_coefficient"],
 
         # 製造販管費
         "chumikin_cost": man_dict["chumikin_cost"],
