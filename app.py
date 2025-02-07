@@ -534,7 +534,7 @@ def assemble_dashboard_data(
         "glaze_material_cost": raw_dict["glaze_material_cost"],
         "main_firing_gas_cost": raw_dict["main_firing_gas_cost"],
         "transfer_sheet_cost": raw_dict["transfer_sheet_cost"],
-        "genzairyousyoukei_coefficient": man_dict["genzairyousyoukei_coefficient"],
+        "genzairyousyoukei_coefficient": raw_dict["genzairyousyoukei"],
 
         # 製造販管費
         "chumikin_cost": man_dict["chumikin_cost"],
