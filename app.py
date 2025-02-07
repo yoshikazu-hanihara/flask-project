@@ -102,15 +102,12 @@ def parse_input_data(req):
 
 
 ##################################################
-# 2) 原材料費計算
+# 2) 原材料費計算 (材料費項目-小計含む)
 ##################################################
 def calculate_raw_material_costs(inp, form):
     """
     原材料費の on/off チェックと計算
-    inp: parse_input_data()の戻り値
-    form: request.form
-    戻り値: 各項目の cost を持った辞書と、合計 raw_material_cost_total
-            + 新たに genzairyousyoukei_coefficient も含める。
+    加えて materials(材料費項目-小計) を計算する。
     """
     # フォームの on/off
     include_dohdai          = form.get('include_dohdai')
@@ -135,7 +132,7 @@ def calculate_raw_material_costs(inp, form):
     order_quantity  = inp["order_quantity"]
     sales_price     = inp["sales_price"]
 
-    # 各項目の初期化
+    # 個別費用
     dohdai_cost = 0
     kata_cost = 0
     drying_fuel_cost = 0
@@ -178,20 +175,19 @@ def calculate_raw_material_costs(inp, form):
 
     # 7) ロゴ銅板代
     if include_logo_copper:
-        # ラジオボタン copper_unit_price
         try:
             copper_unit_price = float(form.get('copper_unit_price', '0'))
         except Exception:
             raise ValueError("銅板単価が不正です。")
         logo_copper_cost = copper_unit_price * order_quantity
 
-    # 8) 釉薬代(ポリ枚数で割り)
+    # 8) 釉薬代
     if include_glaze_material:
         if poly_count <= 0:
             raise ValueError("ポリの枚数が0以下です。")
         glaze_material_cost = (glaze_cost / poly_count) * order_quantity
 
-    # 9) 本焼成 ガス代
+    # 9) 本焼成ガス
     if include_main_firing_gas:
         if kiln_count <= 0:
             raise ValueError("窯入数が0以下です。")
@@ -205,14 +201,14 @@ def calculate_raw_material_costs(inp, form):
             raise ValueError("転写シート単価が不正です。")
         transfer_sheet_cost = transfer_sheet_unit_price * order_quantity
 
+    # 原材料費合計
     raw_material_cost_total = (
         dohdai_cost + kata_cost + drying_fuel_cost + bisque_fuel_cost
         + hassui_cost + paint_cost + logo_copper_cost
         + glaze_material_cost + main_firing_gas_cost + transfer_sheet_cost
     )
 
-    # -----------------------------------------
-    # ★ 材料費項目-小計 (ユーザー要望の式を実装)
+    # 材料費項目-小計 (ユーザー指定の式)
     #   product_weight * DOHDAI_COEFFICIENT
     # + (mold_unit_price / mold_count) / MOLD_DIVISOR
     # + product_weight * DRYING_FUEL_COEFFICIENT
@@ -223,7 +219,6 @@ def calculate_raw_material_costs(inp, form):
     # + (glaze_cost / poly_count)
     # + (gas_unit_price * FIRING_GAS_CONSTANT)
     # + transfer_sheet_unit_price
-    # -----------------------------------------
     genzairyousyoukei_coefficient = (
         (product_weight * DOHDAI_COEFFICIENT if include_dohdai else 0)
         + ((mold_unit_price / mold_count) / MOLD_DIVISOR if include_kata and mold_count>0 else 0)
@@ -237,10 +232,10 @@ def calculate_raw_material_costs(inp, form):
         + (transfer_sheet_unit_price if include_transfer_sheet else 0)
     )
 
-    # 原材料費原価率(例) → raw_material_cost_ratio
+    # 原材料費原価率(仮: 売価に対する比率を % 表示)
     raw_material_cost_ratio = 0
     if raw_material_cost_total > 0:
-        raw_material_cost_ratio = (sales_price / raw_material_cost_total) * 100  # パーセント表記なら*100にするなど
+        raw_material_cost_ratio = (sales_price / raw_material_cost_total) * 100
 
     return {
         "dohdai_cost": dohdai_cost,
@@ -255,20 +250,18 @@ def calculate_raw_material_costs(inp, form):
         "transfer_sheet_cost": transfer_sheet_cost,
         "raw_material_cost_total": raw_material_cost_total,
         "raw_material_cost_ratio": raw_material_cost_ratio,
-        # 新しく追加: 材料費項目-小計
+        # 材料費項目-小計
         "genzairyousyoukei_coefficient": genzairyousyoukei_coefficient
     }
 
 
 ##################################################
-# 3) 製造販管費計算
+# 3) 製造販管費計算 (製造項目-小計含む)
 ##################################################
 def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     """
     製造販管費の on/off チェックと計算
-    inp: parse_input_data()の戻り値
-    form: request.form
-    raw_material_cost_total: 原材料費(後で歩留まり計算に使用)
+    加えて manufacturing(製造項目-小計) を計算する。
     """
     # フォームの on/off
     include_chumikin         = form.get('include_chumikin')
@@ -293,6 +286,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     kiln_count      = inp["kiln_count"]
     loss_defective  = inp["loss_defective"]
 
+    # 個別コスト
     chumikin_cost = 0
     shiagechin_cost = 0
     haiimonochin_cost = 0
@@ -309,6 +303,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     kenpin_cost = 0
     print_kakouchin_cost = 0
 
+    # 入力ラジオ/数値類
     chumikin_unit = 0
     shiagechin_unit = 0
     sawaimono_work = 0
@@ -323,7 +318,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     kamadashi_time = 0
     hamasuri_time = 0
     kenpin_time = 0
-    print_kakouchin_unit = 0
+    print_kakouchin_unit_val = 0
 
     # 1. 鋳込み賃
     if include_chumikin:
@@ -407,10 +402,10 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
 
     # 15. プリント加工賃
     if include_print_kakouchin:
-        print_kakouchin_unit = float(form.get('print_kakouchin_unit', '0'))
-        print_kakouchin_cost = print_kakouchin_unit * order_quantity
+        print_kakouchin_unit_val = float(form.get('print_kakouchin_unit', '0'))
+        print_kakouchin_cost = print_kakouchin_unit_val * order_quantity
 
-    # 製造項目-小計（係数）
+    # 製造項目-小計
     seizousyoukei_coefficient = (
         chumikin_unit
         + shiagechin_unit
@@ -426,16 +421,26 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         + (HOURLY_WAGE * kamadashi_time)
         + (HOURLY_WAGE * hamasuri_time)
         + (HOURLY_WAGE * kenpin_time)
-        + print_kakouchin_unit
+        + print_kakouchin_unit_val
     )
 
     # 合計（歩留まり計算前）
     manufacturing_cost_total_basic = (
-        chumikin_cost + shiagechin_cost + haiimonochin_cost + seisojiken_cost
-        + soyakeire_dashi_cost + soyakebarimono_cost + doban_hari_cost
-        + hassui_kakouchin_cost + shiyu_hiyou_cost + shiyu_cost
-        + kamairi_cost + kamadashi_cost + hamasuri_cost
-        + kenpin_cost + print_kakouchin_cost
+        chumikin_cost
+        + shiagechin_cost
+        + haiimonochin_cost
+        + seisojiken_cost
+        + soyakeire_dashi_cost
+        + soyakebarimono_cost
+        + doban_hari_cost
+        + hassui_kakouchin_cost
+        + shiyu_hiyou_cost
+        + shiyu_cost
+        + kamairi_cost
+        + kamadashi_cost
+        + hamasuri_cost
+        + kenpin_cost
+        + print_kakouchin_cost
     )
 
     # 歩留まり(不良)加算
@@ -443,6 +448,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     manufacturing_cost_total_with_loss = manufacturing_cost_total_basic + yield_coefficient
 
     return {
+        # 個別コスト
         "chumikin_cost": chumikin_cost,
         "shiagechin_cost": shiagechin_cost,
         "haiimonochin_cost": haiimonochin_cost,
@@ -458,8 +464,12 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         "hamasuri_cost": hamasuri_cost,
         "kenpin_cost": kenpin_cost,
         "print_kakouchin_cost": print_kakouchin_cost,
+
+        # 歩留まり
         "yield_coefficient": yield_coefficient,
+        # 製造販管費合計
         "manufacturing_cost_total": manufacturing_cost_total_with_loss,
+        # 製造項目-小計
         "seizousyoukei_coefficient": seizousyoukei_coefficient
     }
 
@@ -469,8 +479,8 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
 ##################################################
 def calculate_sales_admin_cost(form, total_cost):
     """
-    販売管理費 on/off チェック。
-    ダミー(納品人件費=500,ガソリン=300)で加算する例
+    販売管理費 on/off チェック。ダミー例:
+    納品人件費=500, ガソリン=300
     """
     include_nouhin_jinkenhi = form.get('include_nouhin_jinkenhi')
     include_gasoline        = form.get('include_gasoline')
@@ -482,7 +492,9 @@ def calculate_sales_admin_cost(form, total_cost):
         sales_admin_cost_total += 300
 
     # 全体コストが0でないときだけ比率を算出
-    sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
+    sales_admin_cost_ratio = 0
+    if total_cost > 0:
+        sales_admin_cost_ratio = (sales_admin_cost_total / total_cost) * 100
 
     return sales_admin_cost_total, sales_admin_cost_ratio
 
@@ -498,8 +510,7 @@ def assemble_dashboard_data(
     sales_admin_cost_ratio
 ):
     """
-    ダッシュボード表示やJSON返却用に、
-    まとめて結果を辞書にして返す。
+    ダッシュボード表示や JSON返却用に、結果をまとめて返す。
     """
     sales_price     = inp["sales_price"]
     order_quantity  = inp["order_quantity"]
@@ -518,21 +529,30 @@ def assemble_dashboard_data(
         gas_unit_price + loss_defective
     )
 
+    # 原材料費
     raw_material_cost_total = raw_dict["raw_material_cost_total"]
     raw_material_cost_ratio = raw_dict["raw_material_cost_ratio"]
     genzairyousyoukei_coefficient = raw_dict["genzairyousyoukei_coefficient"]
 
+    # 製造販管費
     manufacturing_cost_total = man_dict["manufacturing_cost_total"]
     yield_coefficient = man_dict["yield_coefficient"]
     seizousyoukei_coefficient = man_dict["seizousyoukei_coefficient"]
 
+    # コスト合計
     production_cost_total = raw_material_cost_total + manufacturing_cost_total
     production_plus_sales = production_cost_total + sales_admin_cost_total
+
+    # 利益額・利益率
     profit_amount = total_cost - production_plus_sales
-    profit_ratio  = (profit_amount / total_cost * 100) if total_cost > 0 else 0
+    profit_ratio  = 0
+    if total_cost > 0:
+        profit_ratio = (profit_amount / total_cost) * 100
 
     # 製造販管費比率
-    manufacturing_cost_ratio = (manufacturing_cost_total / total_cost * 100) if total_cost > 0 else 0
+    manufacturing_cost_ratio = 0
+    if total_cost > 0:
+        manufacturing_cost_ratio = (manufacturing_cost_total / total_cost) * 100
 
     return {
         # 基本入力
@@ -548,7 +568,7 @@ def assemble_dashboard_data(
         "glaze_cost": glaze_cost,
         "total_cost": total_cost,
 
-        # 原材料費
+        # 原材料費 (材料費項目-小計含む)
         "raw_material_cost_total": raw_material_cost_total,
         "raw_material_cost_ratio": raw_material_cost_ratio,
         "dohdai_cost": raw_dict["dohdai_cost"],
@@ -563,7 +583,7 @@ def assemble_dashboard_data(
         "transfer_sheet_cost": raw_dict["transfer_sheet_cost"],
         "genzairyousyoukei_coefficient": genzairyousyoukei_coefficient,
 
-        # 製造販管費
+        # 製造販管費 (製造項目-小計含む)
         "chumikin_cost": man_dict["chumikin_cost"],
         "shiagechin_cost": man_dict["shiagechin_cost"],
         "haiimonochin_cost": man_dict["haiimonochin_cost"],
@@ -610,40 +630,40 @@ def dashboard():
 @app.route('/dashboard_post', methods=['POST'])
 def dashboard_post():
     """
-      dashboard.html のフォーム送信時の処理
-      /calculate と同様に計算し、結果をテンプレートへ渡す。
+    dashboard.html のフォーム送信時の処理
+    /calculate と同様に計算し、結果をテンプレートへ渡す。
     """
     try:
         inp = parse_input_data(request.form)
     except ValueError as e:
         return str(e)
 
-    # 単純な合計 (ダミー)
+    # 単純な合計 (ダミー用)
     total_cost = (
         inp["sales_price"] + inp["order_quantity"] + inp["product_weight"] +
         inp["mold_unit_price"] + inp["mold_count"] + inp["kiln_count"] +
         inp["gas_unit_price"] + inp["loss_defective"]
     )
 
-    # 原材料費の計算
+    # 1) 原材料費の計算
     try:
         raw_dict = calculate_raw_material_costs(inp, request.form)
     except ValueError as e:
         return str(e)
 
-    # 製造販管費の計算
+    # 2) 製造販管費の計算
     man_dict = calculate_manufacturing_costs(inp, request.form, raw_dict["raw_material_cost_total"])
 
-    # 販売管理費
+    # 3) 販売管理費の計算
     sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, total_cost)
 
-    # 結果まとめ
+    # 4) 結果まとめ
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
 
-    # 小数点以下2桁に四捨五入
+    # 最終的に小数点以下2桁に四捨五入
     round_values_in_dict(dashboard_data, digits=2)
 
-    # (DB登録など任意)
+    # DB登録など (任意)
     estimate_id = None
     if 'user_id' in session:
         user_id = session['user_id']
@@ -682,36 +702,35 @@ def dashboard_post():
 @app.route('/calculate', methods=['POST'])
 def calculate():
     """
-      JSから非同期で呼ばれる自動計算用API。
+    JSから非同期で呼ばれる自動計算用API (同じ計算ロジック)。
     """
     try:
         inp = parse_input_data(request.form)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    # 単純な合計 (ダミー)
     total_cost = (
         inp["sales_price"] + inp["order_quantity"] + inp["product_weight"] +
         inp["mold_unit_price"] + inp["mold_count"] + inp["kiln_count"] +
         inp["gas_unit_price"] + inp["loss_defective"]
     )
 
-    # 1) 原材料費
+    # 原材料費
     try:
         raw_dict = calculate_raw_material_costs(inp, request.form)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    # 2) 製造販管費
+    # 製造販管費
     man_dict = calculate_manufacturing_costs(inp, request.form, raw_dict["raw_material_cost_total"])
 
-    # 3) 販売管理費
+    # 販売管理費
     sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, total_cost)
 
-    # 4) 組み立て
+    # 結果まとめ
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
 
-    # 小数点以下2桁に四捨五入
+    # 小数点以下2桁に丸め
     round_values_in_dict(dashboard_data, digits=2)
 
     return jsonify(dashboard_data)
