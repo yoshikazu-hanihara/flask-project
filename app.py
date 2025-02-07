@@ -255,95 +255,126 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     print_kakouchin_cost = 0
 
     # 1. 鋳込み賃
+    chumikin_unit = 0
     if include_chumikin:
         chumikin_unit = float(form.get('chumikin_unit', '0'))
         chumikin_cost = chumikin_unit * order_quantity
 
     # 2. 仕上げ賃
+    shiagechin_unit = 0
     if include_shiagechin:
         shiagechin_unit = float(form.get('shiagechin_unit', '0'))
         shiagechin_cost = shiagechin_unit * order_quantity
 
     # 3. 掃いもの賃 ⇒ (使用型単価 / 1時間あたりの作業量) × 個数
+    sawaimono_work = 0
     if include_haiimonochin:
         sawaimono_work = float(form.get('sawaimono_work', '0'))
         if sawaimono_work > 0:
             haiimonochin_cost = (mold_unit_price / sawaimono_work) * order_quantity
 
     # 4. 生素地検品代 ⇒ (時給 / 1時間あたりの検品数) × 個数
+    seisojiken_work = 0
     if include_seisojiken:
         seisojiken_work = float(form.get('seisojiken_work', '0'))
         if seisojiken_work > 0:
             seisojiken_cost = (HOURLY_WAGE / seisojiken_work) * order_quantity
 
     # 5. 素焼入れ/出し
+    soyakeire_work = 0
     if include_soyakeire_dashi:
         soyakeire_work = float(form.get('soyakeire_work', '0'))
         if soyakeire_work > 0:
             soyakeire_dashi_cost = (HOURLY_WAGE / soyakeire_work) * order_quantity
 
     # 6. 素焼払いもの
+    soyakebarimono_work = 0
     if include_soyakebarimono:
         soyakebarimono_work = float(form.get('soyakebarimono_work', '0'))
         if soyakebarimono_work > 0:
             soyakebarimono_cost = (HOURLY_WAGE / soyakebarimono_work) * order_quantity
 
     # 7. 銅版貼り
+    doban_hari_unit = 0
     if include_doban_hari:
         doban_hari_unit = float(form.get('doban_hari_unit', '0'))
         doban_hari_cost = doban_hari_unit * order_quantity
 
     # 8. 撥水加工賃
+    hassui_kakouchin_work = 0
     if include_hassui_kakouchin:
         hassui_kakouchin_work = float(form.get('hassui_kakouchin_work', '0'))
         if hassui_kakouchin_work > 0:
             hassui_kakouchin_cost = (HOURLY_WAGE / hassui_kakouchin_work) * order_quantity
 
     # 9. 絵付け賃
+    shiyu_hiyou_unit = 0
     if include_shiyu_hiyou:
         shiyu_hiyou_unit = float(form.get('shiyu_hiyou_unit', '0'))
         shiyu_hiyou_cost = shiyu_hiyou_unit * order_quantity
 
     # 10. 施釉費
+    shiyu_work = 0
     if include_shiyu_cost:
         shiyu_work = float(form.get('shiyu_work', '0'))
         if shiyu_work > 0:
             shiyu_cost = (HOURLY_WAGE / shiyu_work) * order_quantity
 
     # 11. 窯入れ
+    kamairi_time = 0
     if include_kamairi:
         kamairi_time = float(form.get('kamairi_time', '0'))
         if kiln_count > 0 and kamairi_time > 0:
             kamairi_cost = (HOURLY_WAGE * kamairi_time / kiln_count) * order_quantity
 
     # 12. 窯出し
+    kamadashi_time = 0
     if include_kamadashi:
         kamadashi_time = float(form.get('kamadashi_time', '0'))
         if kiln_count > 0 and kamadashi_time > 0:
             kamadashi_cost = (HOURLY_WAGE * kamadashi_time / kiln_count) * order_quantity
 
     # 13. ハマスリ
+    hamasuri_time = 0
     if include_hamasuri:
         hamasuri_time = float(form.get('hamasuri_time', '0'))
         if kiln_count > 0 and hamasuri_time > 0:
             hamasuri_cost = (HOURLY_WAGE * hamasuri_time / kiln_count) * order_quantity
 
     # 14. 検品
+    kenpin_time = 0
     if include_kenpin:
         kenpin_time = float(form.get('kenpin_time', '0'))
         if kiln_count > 0 and kenpin_time > 0:
             kenpin_cost = (HOURLY_WAGE * kenpin_time / kiln_count) * order_quantity
 
     # 15. プリント加工賃
+    print_kakouchin_unit = 0
     if include_print_kakouchin:
         print_kakouchin_unit = float(form.get('print_kakouchin_unit', '0'))
         print_kakouchin_cost = print_kakouchin_unit * order_quantity
 
-    # 製造項目-小計
-    seizousyoukei_coefficient = chumikin_unit + shiagechin_unit + (mold_unit_price / sawaimono_work) + (HOURLY_WAGE / seisojiken_work) + (HOURLY_WAGE / soyakeire_work) + (HOURLY_WAGE / soyakebarimono_work) + doban_hari_unit + (HOURLY_WAGE / hassui_kakouchin_work) + shiyu_hiyou_unit + (HOURLY_WAGE / shiyu_work) + (HOURLY_WAGE * kamairi_time) + (HOURLY_WAGE * kamadashi_time) + (HOURLY_WAGE * hamasuri_time) + (HOURLY_WAGE * kenpin_time) + print_kakouchin_unit
+    # 製造項目-小計（係数）
+    seizousyoukei_coefficient = (
+        chumikin_unit
+        + shiagechin_unit
+        + (mold_unit_price / sawaimono_work if sawaimono_work > 0 else 0)
+        + (HOURLY_WAGE / seisojiken_work if seisojiken_work > 0 else 0)
+        + (HOURLY_WAGE / soyakeire_work if soyakeire_work > 0 else 0)
+        + (HOURLY_WAGE / soyakebarimono_work if soyakebarimono_work > 0 else 0)
+        + doban_hari_unit
+        + (HOURLY_WAGE / hassui_kakouchin_work if hassui_kakouchin_work > 0 else 0)
+        + shiyu_hiyou_unit
+        + (HOURLY_WAGE / shiyu_work if shiyu_work > 0 else 0)
+        + (HOURLY_WAGE * kamairi_time)
+        + (HOURLY_WAGE * kamadashi_time)
+        + (HOURLY_WAGE * hamasuri_time)
+        + (HOURLY_WAGE * kenpin_time)
+        + print_kakouchin_unit
+    )
 
-    # 合計
-    manufacturing_cost_total = (
+    # 合計（歩留まり計算前）
+    manufacturing_cost_total_basic = (
         chumikin_cost + shiagechin_cost + haiimonochin_cost + seisojiken_cost
         + soyakeire_dashi_cost + soyakebarimono_cost + doban_hari_cost
         + hassui_kakouchin_cost + shiyu_hiyou_cost + shiyu_cost
@@ -351,13 +382,9 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         + kenpin_cost + print_kakouchin_cost
     )
 
-    # 歩留まり(不良)加算例
-    yield_coefficient = (raw_material_cost_total + manufacturing_cost_total) * loss_defective
-    manufacturing_cost_total_with_loss = manufacturing_cost_total + yield_coefficient
-
-    # (全体コストを計算する際に参照するので ratio も算出)
-    # とりあえず "total_cost" は後でまとめて計算されるので、ここでは計算不要でもOK
-    manufacturing_cost_ratio = 0  # 後で計算
+    # 歩留まり(不良)加算
+    yield_coefficient = (raw_material_cost_total + manufacturing_cost_total_basic) * loss_defective
+    manufacturing_cost_total_with_loss = manufacturing_cost_total_basic + yield_coefficient
 
     return {
         "chumikin_cost": chumikin_cost,
@@ -375,9 +402,10 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         "hamasuri_cost": hamasuri_cost,
         "kenpin_cost": kenpin_cost,
         "print_kakouchin_cost": print_kakouchin_cost,
-        "seizousyoukei_coefficient": seizousyoukei_coefficient
         "yield_coefficient": yield_coefficient,
-        "manufacturing_cost_total": manufacturing_cost_total_with_loss  # 歩留まり込み
+        "manufacturing_cost_total": manufacturing_cost_total_with_loss,
+        # 追加: 製造項目-小計
+        "seizousyoukei_coefficient": seizousyoukei_coefficient
     }
 
 
@@ -447,10 +475,9 @@ def assemble_dashboard_data(
     profit_amount = total_cost - production_plus_sales
     profit_ratio  = (profit_amount / total_cost * 100) if total_cost > 0 else 0
 
-    # 製造販管費比率 (ここで算出)
+    # 製造販管費比率
     manufacturing_cost_ratio = (manufacturing_cost_total / total_cost * 100) if total_cost > 0 else 0
 
-    # 結果をまとめて返す
     return {
         # 基本入力
         "sales_price": sales_price,
@@ -465,7 +492,7 @@ def assemble_dashboard_data(
         "glaze_cost": glaze_cost,
         "total_cost": total_cost,
 
-        # 原材料費 (raw_dict を展開)
+        # 原材料費
         "raw_material_cost_total": raw_material_cost_total,
         "raw_material_cost_ratio": raw_material_cost_ratio,
         "dohdai_cost": raw_dict["dohdai_cost"],
@@ -479,7 +506,7 @@ def assemble_dashboard_data(
         "main_firing_gas_cost": raw_dict["main_firing_gas_cost"],
         "transfer_sheet_cost": raw_dict["transfer_sheet_cost"],
 
-        # 製造販管費 (man_dict を展開)
+        # 製造販管費
         "chumikin_cost": man_dict["chumikin_cost"],
         "shiagechin_cost": man_dict["shiagechin_cost"],
         "haiimonochin_cost": man_dict["haiimonochin_cost"],
@@ -498,6 +525,9 @@ def assemble_dashboard_data(
         "yield_coefficient": man_dict["yield_coefficient"],
         "manufacturing_cost_total": manufacturing_cost_total,
         "manufacturing_cost_ratio": manufacturing_cost_ratio,
+
+        # ★ 製造項目-小計
+        "seizousyoukei_coefficient": man_dict["seizousyoukei_coefficient"],
 
         # 販売管理費
         "sales_admin_cost_total": sales_admin_cost_total,
@@ -596,8 +626,6 @@ def dashboard_post():
 def calculate():
     """
       JSから非同期で呼ばれる自動計算用API。
-      ほぼ dashboard_post と同じロジック。
-      JSONを返す。
     """
     try:
         inp = parse_input_data(request.form)
