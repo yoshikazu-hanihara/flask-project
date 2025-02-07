@@ -375,6 +375,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         "hamasuri_cost": hamasuri_cost,
         "kenpin_cost": kenpin_cost,
         "print_kakouchin_cost": print_kakouchin_cost,
+        "seizousyoukei_coefficient": seizousyoukei_coefficient
         "yield_coefficient": yield_coefficient,
         "manufacturing_cost_total": manufacturing_cost_total_with_loss  # 歩留まり込み
     }
