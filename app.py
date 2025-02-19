@@ -386,15 +386,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         + print_kakouchin_unit
     )
 
-    # 合計（歩留まり計算前）
-    manufacturing_cost_total_basic = (
-        chumikin_cost + shiagechin_cost + haiimonochin_cost + seisojiken_cost
-        + soyakeire_dashi_cost + soyakebarimono_cost + doban_hari_cost
-        + hassui_kakouchin_cost + shiyu_hiyou_cost + shiyu_cost
-        + kamairi_cost + kamadashi_cost + hamasuri_cost
-        + kenpin_cost + print_kakouchin_cost
-    )
-
+    
 
     # 製造販管費合計
     manufacturing_cost_total = seizousyoukei_coefficient + yield_coefficient
