@@ -421,6 +421,11 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     # 製造販管費合計
     manufacturing_cost_total = seizousyoukei_coefficient + yield_coefficient
 
+
+    # 製造販管費原価率
+    manufacturing_cost_ratio = manufacturing_cost_total / sales_price
+
+
     
 
     # 歩留まり(不良)加算
