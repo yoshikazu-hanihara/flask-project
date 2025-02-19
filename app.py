@@ -215,29 +215,7 @@ def calculate_raw_material_costs(inp, form):
         + glaze_material_cost + main_firing_gas_cost + transfer_sheet_cost
     )
 
-    # 原材料費原価率(例: 下記は便宜的な計算)
-    # ※本来は (原材料費 / 売上) * 100 (%) にするケースが多いが、ここでは既存ロジックをそのまま
-    if raw_material_cost_total > 0:
-        raw_material_cost_ratio = sales_price / raw_material_cost_total
-    else:
-        raw_material_cost_ratio = 0
-
-    return {
-        "dohdai_cost": dohdai_cost,
-        "kata_cost": kata_cost,
-        "drying_fuel_cost": drying_fuel_cost,
-        "bisque_fuel_cost": bisque_fuel_cost,
-        "hassui_cost": hassui_cost,
-        "paint_cost": paint_cost,
-        "logo_copper_cost": logo_copper_cost,
-        "glaze_material_cost": glaze_material_cost,
-        "main_firing_gas_cost": main_firing_gas_cost,
-        "transfer_sheet_cost": transfer_sheet_cost,
-        "raw_material_cost_total": raw_material_cost_total,
-        "raw_material_cost_ratio": raw_material_cost_ratio,
-        "genzairyousyoukei": genzairyousyoukei_coefficient
-    }
-
+   
 
 ##################################################
 # 3) 製造販管費計算
