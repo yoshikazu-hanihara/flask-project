@@ -417,6 +417,12 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         + kenpin_cost + print_kakouchin_cost
     )
 
+
+    # 製造販管費合計
+    manufacturing_cost_total = seizousyoukei_coefficient + yield_coefficient
+
+    
+
     # 歩留まり(不良)加算
     yield_coefficient = (seizousyoukei_coefficient + genzairyousyoukei_coefficient) * loss_defective
 
