@@ -418,8 +418,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     )
 
     # 歩留まり(不良)加算
-    yield_coefficient = (raw_material_cost_total + manufacturing_cost_total_basic) * loss_defective
-    manufacturing_cost_total_with_loss = manufacturing_cost_total_basic + yield_coefficient
+    yield_coefficient = (seizousyoukei_coefficient + genzairyousyoukei_coefficient) * loss_defective
 
     return {
         "chumikin_cost": chumikin_cost,
