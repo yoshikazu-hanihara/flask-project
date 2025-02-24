@@ -5,18 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>陶磁器見積もり入力</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <style>
-    /* 右下に固定する時給表示のスタイル例 */
-    .fixed-wage {
-      position: fixed;
-      right: 10px;
-      bottom: 10px;
-      background: #eee;
-      border: 1px solid #ccc;
-      padding: 5px 10px;
-      font-weight: bold;
-    }
-  </style>
 </head>
 <body>
   <div class="wrapper">
@@ -325,6 +313,9 @@
             <p id="sales_admin_cost_ratio_display">販売管理費率: （計算後に表示）</p>
           </div>
         </fieldset>
+
+        <!-- ここに「計算する」ボタンを配置 -->
+        <button type="button" id="calc-button">計算する</button>
       </form>
     </div>
 
@@ -351,184 +342,163 @@
   <!-- 固定表示：時給3000円計算 -->
   <div class="fixed-wage">時給3000円計算</div>
 
-  <!-- JavaScript：フォーム内の変更を検知して自動計算 -->
+  <!-- JavaScript：ボタンを押したときにのみ計算を実行 -->
   <script>
-    document.addEventListener('DOMContentLoaded', function(){
+    // 計算処理用関数
+    function updateCalculation(){
       const form = document.getElementById('calc-form');
+      const formData = new FormData(form);
 
-      function updateCalculation(){
-        const formData = new FormData(form);
-        fetch('/calculate', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => {
-          if (!response.ok) {
-            return response.json().then(data => { throw data; });
-          }
-          return response.json();
-        })
-        .then(data => {
-          // 全体結果の更新
-          document.getElementById('production_plus_sales_display').innerText =
-              "製造原価＋販売管理費: " + data.production_plus_sales;
-          document.getElementById('profit_amount_display').innerText =
-              "利益額: " + data.profit_amount;
-          document.getElementById('profit_ratio_display').innerText =
-              "利益率: " + data.profit_ratio.toFixed(2) + "%";
-          document.getElementById('raw_material_cost_total_display').innerText =
-              "原材料費合計: " + data.raw_material_cost_total;
-          document.getElementById('raw_material_cost_ratio_display').innerText =
-              "原材料費原価率: " + data.raw_material_cost_ratio.toFixed(2) + "%";
-          document.getElementById('yield_coefficient_display').innerText =
-              "歩留まり係数: " + data.yield_coefficient.toFixed(2);
-          document.getElementById('manufacturing_cost_total_display').innerText =
-              "製造販管費合計: " + data.manufacturing_cost_total;
-          document.getElementById('manufacturing_cost_ratio_display').innerText =
-              "製造販管費原価率: " + data.manufacturing_cost_ratio.toFixed(2) + "%";
-          document.getElementById('sales_admin_cost_total_display').innerText =
-              "販売管理費合計: " + data.sales_admin_cost_total;
-          document.getElementById('sales_admin_cost_ratio_display').innerText =
-              "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
+      fetch('/calculate', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => { throw data; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 全体結果の更新
+        document.getElementById('production_plus_sales_display').innerText =
+            "製造原価＋販売管理費: " + data.production_plus_sales;
+        document.getElementById('profit_amount_display').innerText =
+            "利益額: " + data.profit_amount;
+        document.getElementById('profit_ratio_display').innerText =
+            "利益率: " + data.profit_ratio.toFixed(2) + "%";
+        document.getElementById('raw_material_cost_total_display').innerText =
+            "原材料費合計: " + data.raw_material_cost_total;
+        document.getElementById('raw_material_cost_ratio_display').innerText =
+            "原材料費原価率: " + data.raw_material_cost_ratio.toFixed(2) + "%";
+        document.getElementById('yield_coefficient_display').innerText =
+            "歩留まり係数: " + data.yield_coefficient.toFixed(2);
+        document.getElementById('manufacturing_cost_total_display').innerText =
+            "製造販管費合計: " + data.manufacturing_cost_total;
+        document.getElementById('manufacturing_cost_ratio_display').innerText =
+            "製造販管費原価率: " + data.manufacturing_cost_ratio.toFixed(2) + "%";
+        document.getElementById('sales_admin_cost_total_display').innerText =
+            "販売管理費合計: " + data.sales_admin_cost_total;
+        document.getElementById('sales_admin_cost_ratio_display').innerText =
+            "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
 
-          // 材料費各項目の更新
-          document.getElementById('dohdai_cost_display').innerText =
-              "合計金額: " + data.dohdai_cost;
-          document.getElementById('kata_cost_display').innerText =
-              "合計金額: " + data.kata_cost;
-          document.getElementById('drying_fuel_cost_display').innerText =
-              "合計金額: " + data.drying_fuel_cost;
-          document.getElementById('bisque_fuel_cost_display').innerText =
-              "合計金額: " + data.bisque_fuel_cost;
-          document.getElementById('hassui_cost_display').innerText =
-              "合計金額: " + data.hassui_cost;
-          document.getElementById('paint_cost_display').innerText =
-              "合計金額: " + data.paint_cost;
-          document.getElementById('logo_copper_cost_display').innerText =
-              "合計金額: " + data.logo_copper_cost;
-          
-          // ★ 材料費項目-小計の表示追加
-          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
-              "材料費項目-小計: " + data.genzairyousyoukei_coefficient;
+        // 材料費各項目の更新
+        document.getElementById('dohdai_cost_display').innerText =
+            "合計金額: " + data.dohdai_cost;
+        document.getElementById('kata_cost_display').innerText =
+            "合計金額: " + data.kata_cost;
+        document.getElementById('drying_fuel_cost_display').innerText =
+            "合計金額: " + data.drying_fuel_cost;
+        document.getElementById('bisque_fuel_cost_display').innerText =
+            "合計金額: " + data.bisque_fuel_cost;
+        document.getElementById('hassui_cost_display').innerText =
+            "合計金額: " + data.hassui_cost;
+        document.getElementById('paint_cost_display').innerText =
+            "合計金額: " + data.paint_cost;
+        document.getElementById('logo_copper_cost_display').innerText =
+            "合計金額: " + data.logo_copper_cost;
+        
+        // 材料費項目-小計
+        document.getElementById('genzairyousyoukei_coefficient_display').innerText =
+            "材料費項目-小計: " + data.genzairyousyoukei_coefficient;
 
-          // 製造販管費各項目の更新
-          document.getElementById('chumikin_cost_display').innerText =
-              "合計金額: " + data.chumikin_cost;
-          document.getElementById('shiagechin_cost_display').innerText =
-              "合計金額: " + data.shiagechin_cost;
-          document.getElementById('haiimonochin_cost_display').innerText =
-              "合計金額: " + data.haiimonochin_cost;
-          document.getElementById('seisojiken_cost_display').innerText =
-              "合計金額: " + data.seisojiken_cost;
-          document.getElementById('soyakeire_dashi_cost_display').innerText =
-              "合計金額: " + data.soyakeire_dashi_cost;
-          document.getElementById('soyakebarimono_cost_display').innerText =
-              "合計金額: " + data.soyakebarimono_cost;
-          document.getElementById('doban_hari_cost_display').innerText =
-              "合計金額: " + data.doban_hari_cost;
-          document.getElementById('hassui_kakouchin_cost_display').innerText =
-              "合計金額: " + data.hassui_kakouchin_cost;
-          document.getElementById('shiyu_hiyou_cost_display').innerText =
-              "合計金額: " + data.shiyu_hiyou_cost;
-          document.getElementById('shiyu_cost_display').innerText =
-              "合計金額: " + data.shiyu_cost;
-          document.getElementById('kamairi_cost_display').innerText =
-              "合計金額: " + data.kamairi_cost;
-          document.getElementById('kamadashi_cost_display').innerText =
-              "合計金額: " + data.kamadashi_cost;
-          document.getElementById('hamasuri_cost_display').innerText =
-              "合計金額: " + data.hamasuri_cost;
-          document.getElementById('kenpin_cost_display').innerText =
-              "合計金額: " + data.kenpin_cost;
-          document.getElementById('print_kakouchin_cost_display').innerText =
-              "合計金額: " + data.print_kakouchin_cost;
-          document.getElementById('glaze_material_cost_display').innerText =
-              "合計金額: " + data.glaze_material_cost;
-          document.getElementById('main_firing_gas_cost_display').innerText =
-              "合計金額: " + data.main_firing_gas_cost;
-          document.getElementById('transfer_sheet_cost_display').innerText =
-              "合計金額: " + data.transfer_sheet_cost;
+        // 製造販管費各項目の更新
+        document.getElementById('chumikin_cost_display').innerText =
+            "合計金額: " + data.chumikin_cost;
+        document.getElementById('shiagechin_cost_display').innerText =
+            "合計金額: " + data.shiagechin_cost;
+        document.getElementById('haiimonochin_cost_display').innerText =
+            "合計金額: " + data.haiimonochin_cost;
+        document.getElementById('seisojiken_cost_display').innerText =
+            "合計金額: " + data.seisojiken_cost;
+        document.getElementById('soyakeire_dashi_cost_display').innerText =
+            "合計金額: " + data.soyakeire_dashi_cost;
+        document.getElementById('soyakebarimono_cost_display').innerText =
+            "合計金額: " + data.soyakebarimono_cost;
+        document.getElementById('doban_hari_cost_display').innerText =
+            "合計金額: " + data.doban_hari_cost;
+        document.getElementById('hassui_kakouchin_cost_display').innerText =
+            "合計金額: " + data.hassui_kakouchin_cost;
+        document.getElementById('shiyu_hiyou_cost_display').innerText =
+            "合計金額: " + data.shiyu_hiyou_cost;
+        document.getElementById('shiyu_cost_display').innerText =
+            "合計金額: " + data.shiyu_cost;
+        document.getElementById('kamairi_cost_display').innerText =
+            "合計金額: " + data.kamairi_cost;
+        document.getElementById('kamadashi_cost_display').innerText =
+            "合計金額: " + data.kamadashi_cost;
+        document.getElementById('hamasuri_cost_display').innerText =
+            "合計金額: " + data.hamasuri_cost;
+        document.getElementById('kenpin_cost_display').innerText =
+            "合計金額: " + data.kenpin_cost;
+        document.getElementById('print_kakouchin_cost_display').innerText =
+            "合計金額: " + data.print_kakouchin_cost;
+        document.getElementById('glaze_material_cost_display').innerText =
+            "合計金額: " + data.glaze_material_cost;
+        document.getElementById('main_firing_gas_cost_display').innerText =
+            "合計金額: " + data.main_firing_gas_cost;
+        document.getElementById('transfer_sheet_cost_display').innerText =
+            "合計金額: " + data.transfer_sheet_cost;
 
-          // ★ 製造項目-小計の表示追加
-          document.getElementById('seizousyoukei_coefficient_display').innerText =
-              "製造項目-小計: " + data.seizousyoukei_coefficient;
-        })
-        .catch(error => {
-          const msg = "入力項目が不十分です";
-          document.getElementById('production_plus_sales_display').innerText =
-              "製造原価＋販売管理費: " + msg;
-          document.getElementById('profit_amount_display').innerText =
-              "利益額: " + msg;
-          document.getElementById('profit_ratio_display').innerText =
-              "利益率: " + msg;
-          document.getElementById('raw_material_cost_total_display').innerText =
-              "原材料費合計: " + msg;
-          document.getElementById('raw_material_cost_ratio_display').innerText =
-              "原材料費原価率: " + msg;
-          document.getElementById('yield_coefficient_display').innerText =
-              "歩留まり係数: " + msg;
-          document.getElementById('manufacturing_cost_total_display').innerText =
-              "製造販管費合計: " + msg;
-          document.getElementById('manufacturing_cost_ratio_display').innerText =
-              "製造販管費原価率: " + msg;
-          document.getElementById('sales_admin_cost_total_display').innerText =
-              "販売管理費合計: " + msg;
-          document.getElementById('sales_admin_cost_ratio_display').innerText =
-              "販売管理費率: " + msg;
-          
-          // 製造販管費各項目もエラー表示
-          document.getElementById('chumikin_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('shiagechin_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('haiimonochin_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('seisojiken_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('soyakeire_dashi_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('soyakebarimono_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('doban_hari_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('hassui_kakouchin_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('shiyu_hiyou_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('shiyu_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('kamairi_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('kamadashi_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('hamasuri_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('kenpin_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('print_kakouchin_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('glaze_material_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('main_firing_gas_cost_display').innerText =
-              "合計金額: " + msg;
-          document.getElementById('transfer_sheet_cost_display').innerText =
-              "合計金額: " + msg;
-          
-          // ★ 製造項目-小計もエラー表示
-          document.getElementById('seizousyoukei_coefficient_display').innerText =
-              "製造項目-小計: " + msg;
-          
-          // ★ 材料費項目-小計もエラー表示
-          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
-              "材料費項目-小計: " + msg;
+        // 製造項目-小計
+        document.getElementById('seizousyoukei_coefficient_display').innerText =
+            "製造項目-小計: " + data.seizousyoukei_coefficient;
+
+      })
+      .catch(error => {
+        // 入力項目が不十分などでエラーが発生した場合の表示
+        const msg = "入力項目が不十分です";
+        document.getElementById('production_plus_sales_display').innerText =
+            "製造原価＋販売管理費: " + msg;
+        document.getElementById('profit_amount_display').innerText =
+            "利益額: " + msg;
+        document.getElementById('profit_ratio_display').innerText =
+            "利益率: " + msg;
+        document.getElementById('raw_material_cost_total_display').innerText =
+            "原材料費合計: " + msg;
+        document.getElementById('raw_material_cost_ratio_display').innerText =
+            "原材料費原価率: " + msg;
+        document.getElementById('yield_coefficient_display').innerText =
+            "歩留まり係数: " + msg;
+        document.getElementById('manufacturing_cost_total_display').innerText =
+            "製造販管費合計: " + msg;
+        document.getElementById('manufacturing_cost_ratio_display').innerText =
+            "製造販管費原価率: " + msg;
+        document.getElementById('sales_admin_cost_total_display').innerText =
+            "販売管理費合計: " + msg;
+        document.getElementById('sales_admin_cost_ratio_display').innerText =
+            "販売管理費率: " + msg;
+
+        // 各項目のエラー表示
+        const errorDisplays = [
+          'chumikin_cost_display', 'shiagechin_cost_display', 'haiimonochin_cost_display',
+          'seisojiken_cost_display', 'soyakeire_dashi_cost_display', 'soyakebarimono_cost_display',
+          'doban_hari_cost_display', 'hassui_kakouchin_cost_display', 'shiyu_hiyou_cost_display',
+          'shiyu_cost_display', 'kamairi_cost_display', 'kamadashi_cost_display',
+          'hamasuri_cost_display', 'kenpin_cost_display', 'print_kakouchin_cost_display',
+          'glaze_material_cost_display', 'main_firing_gas_cost_display', 'transfer_sheet_cost_display',
+          'dohdai_cost_display', 'kata_cost_display', 'drying_fuel_cost_display',
+          'bisque_fuel_cost_display', 'hassui_cost_display', 'paint_cost_display',
+          'logo_copper_cost_display'
+        ];
+        errorDisplays.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = "合計金額: " + msg;
         });
-      }
+        
+        // 製造/材料費項目-小計もエラー表示
+        document.getElementById('seizousyoukei_coefficient_display').innerText =
+            "製造項目-小計: " + msg;
+        document.getElementById('genzairyousyoukei_coefficient_display').innerText =
+            "材料費項目-小計: " + msg;
+      });
+    }
 
-      // すべての入力項目にイベントリスナーを設定
-      const inputs = form.querySelectorAll('input');
-      inputs.forEach(input => {
-        input.addEventListener('input', updateCalculation);
-        input.addEventListener('change', updateCalculation);
+    // ページ読み込み時に、計算ボタンにのみイベント設定
+    document.addEventListener('DOMContentLoaded', function(){
+      const calcButton = document.getElementById('calc-button');
+      calcButton.addEventListener('click', () => {
+        updateCalculation();
       });
     });
   </script>
