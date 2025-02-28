@@ -429,14 +429,14 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     )
 
     # 歩留まり係数
-    yield_coefficient = (seizousyoukei_coefficient + genzairyousyoukei_coefficient) * loss_defective
+    yield_coefficient = (raw_material_cost_total + seizousyoukei_coefficient) * loss_defective
 
     manufacturing_cost_total = seizousyoukei_coefficient + yield_coefficient
 
     # 製造販管費原価率(例: 売価×数量に対する割合)
     manufacturing_cost_ratio = 0
     if sales_price>0 and order_quantity>0:
-        manufacturing_cost_ratio = manufacturing_cost_total / sales_price
+        manufacturing_cost_ratio = (manufacturing_cost_total / (sales_price * order_quantity)) * 100
 
     return {
         "chumikin_cost": chumikin_cost,
