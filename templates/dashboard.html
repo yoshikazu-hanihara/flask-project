@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>陶磁器見積もり入力</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* 右下に固定する時給表示のスタイル例 */
+    .fixed-wage {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      background: #eee;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <div class="wrapper">
@@ -12,45 +24,43 @@
 
     <!-- 入力フォーム：すべての項目（基本数値＋オプション）をひとまとめに -->
     <div id="nyuuryoku" class="formbox-0">
-      <!-- ★ required は削除して、途中入力可能にする -->
       <form id="calc-form" onsubmit="return false;">
-
         <!-- 基本入力項目 -->
         <fieldset>
           <legend>陶磁器見積もり入力項目</legend>
           
           <label>売価:</label>
-          <input type="number" name="sales_price" step="any" placeholder="例: 380"><span>円</span><br><br>
+          <input type="number" name="sales_price" step="any" placeholder="例: 380" required><span>円</span><br><br>
           
           <label>発注数:</label>
-          <input type="number" name="order_quantity" min="1" placeholder="例: 1000"><span>個</span><br><br>
+          <input type="number" name="order_quantity" min="1" placeholder="例: 1000" required><span>個</span><br><br>
           
           <label>製品重量:</label>
-          <input type="number" name="product_weight" step="any" placeholder="例: 200"><span>g（グラム）</span><br><br>
+          <input type="number" name="product_weight" step="any" placeholder="例: 200" required><span>g（グラム）</span><br><br>
           
           <label>使用型単価:</label>
-          <input type="number" name="mold_unit_price" step="any" placeholder="例: 2500"><span>円</span><br><br>
+          <input type="number" name="mold_unit_price" step="any" placeholder="例: 2500" required><span>円</span><br><br>
           
           <label>使用型の数出し数:</label>
-          <input type="number" name="mold_count" min="0" placeholder="例: 2"><span>個</span><br><br>
+          <input type="number" name="mold_count" min="0" placeholder="例: 2" required><span>個</span><br><br>
           
           <label>釉薬代:</label>
-          <input type="number" name="glaze_cost" step="any" placeholder="例: 8500"><span>円</span><br><br>
+          <input type="number" name="glaze_cost" step="any" placeholder="例: 8500" required><span>円</span><br><br>
 
           <label>ポリ1本で塗れる枚数:</label>
-          <input type="number" name="poly_count" placeholder="例: 650"><span>枚</span><br><br>
+          <input type="number" name="poly_count" placeholder="例: 650" required><span>枚</span><br><br>
           
           <label>窯入数:</label>
-          <input type="number" name="kiln_count" min="1" placeholder="例: 1760"><span>個</span><br><br>
+          <input type="number" name="kiln_count" min="1" placeholder="例: 1760" required><span>個</span><br><br>
           
           <label>ガス単価:</label>
-          <input type="number" name="gas_unit_price" step="any" placeholder="例: 140"><span>円</span><br><br>
+          <input type="number" name="gas_unit_price" step="any" placeholder="例: 140" required><span>円</span><br><br>
           
           <label>ロス 不良:</label>
-          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1"><span>（例：0.1 = 10%）</span><br><br>
+          <input type="number" name="loss_defective" step="any" placeholder="例: 0.1" required><span>（例：0.1 = 10%）</span><br><br>
         </fieldset>
 
-        <!-- 材料費原価 -->
+        <!-- 材料費原価（そのままの仕様） -->
         <fieldset>
           <legend>材料費原価 (オン/オフ選択)</legend>
           <div>
@@ -135,7 +145,7 @@
           </div>
         </fieldset>
 
-        <!-- 製造販管費 -->
+        <!-- 製造販管費：各項目ごとに新入力欄とラジオ選択を追加 -->
         <fieldset>
           <legend>製造販管費 (オン/オフ選択)</legend>
           <!-- 鋳込み賃 -->
@@ -167,7 +177,7 @@
               <input type="radio" name="haiimonochin_unit" value="10" checked>10円
               <input type="radio" name="haiimonochin_unit" value="20">20円
               <input type="radio" name="haiimonochin_unit" value="30">30円
-              <input type="number" name="sawaimono_work" step="any" placeholder="1時間あたりの作業量" style="width:150px;">
+              <input type="number" name="sawaimono_work" step="any" placeholder="1時間あたりの作業量・掃い" style="width:150px;"> 
               <span id="haiimonochin_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -176,11 +186,10 @@
           <div>
             <label>
               <input type="checkbox" name="include_seisojiken"> 生素地検品代
-              <!-- ラジオはサンプル的に置いているが実際には safe_float でまとめて処理可 -->
               <input type="radio" name="seisojiken_unit" value="10" checked>10円
               <input type="radio" name="seisojiken_unit" value="20">20円
               <input type="radio" name="seisojiken_unit" value="30">30円
-              <input type="number" name="seisojiken_work" step="any" placeholder="1時間あたり作業量" style="width:150px;"> 
+              <input type="number" name="seisojiken_work" step="any" placeholder="1時間あたりの作業量・生素地検品" style="width:150px;"> 
               <span id="seisojiken_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -192,7 +201,7 @@
               <input type="radio" name="soyakeire_dashi_unit" value="10" checked>10円
               <input type="radio" name="soyakeire_dashi_unit" value="20">20円
               <input type="radio" name="soyakeire_dashi_unit" value="30">30円
-              <input type="number" name="soyakeire_work" step="any" placeholder="1時間あたり作業量" style="width:150px;">
+              <input type="number" name="soyakeire_work" step="any" placeholder="1時間あたりの作業量・素焼入出" style="width:150px;">
               <span id="soyakeire_dashi_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -204,7 +213,7 @@
               <input type="radio" name="soyakebarimono_unit" value="10" checked>10円
               <input type="radio" name="soyakebarimono_unit" value="20">20円
               <input type="radio" name="soyakebarimono_unit" value="30">30円
-              <input type="number" name="soyakebarimono_work" step="any" placeholder="1時間あたり作業量" style="width:150px;">
+              <input type="number" name="soyakebarimono_work" step="any" placeholder="1時間あたりの作業量・素焼払" style="width:150px;">
               <span id="soyakebarimono_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -227,7 +236,7 @@
               <input type="radio" name="hassui_kakouchin_unit" value="10" checked>10円
               <input type="radio" name="hassui_kakouchin_unit" value="20">20円
               <input type="radio" name="hassui_kakouchin_unit" value="30">30円
-              <input type="number" name="hassui_kakouchin_work" step="any" placeholder="1時間あたり作業量" style="width:150px;">
+              <input type="number" name="hassui_kakouchin_work" step="any" placeholder="1時間あたりの作業量・撥水加工" style="width:150px;">
               <span id="hassui_kakouchin_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -247,7 +256,7 @@
           <div>
             <label>
               <input type="checkbox" name="include_shiyu_cost"> 施釉費
-              <input type="number" name="shiyu_work" step="any" placeholder="1時間あたり作業量" style="width:150px;">
+              <input type="number" name="shiyu_work" step="any" placeholder="1時間あたりの作業量・施釉" style="width:150px;">
               <span id="shiyu_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -274,7 +283,7 @@
           <div>
             <label>
               <input type="checkbox" name="include_hamasuri" checked> ハマスリ費用
-              <input type="number" name="hamasuri_time" step="any" placeholder="窯分ハマスリをする時間" style="width:150px;">
+              <input type="number" name="hamasuri_time" step="any" placeholder="窯分のハマスリをする時間" style="width:150px;">
               <span id="hamasuri_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -283,7 +292,7 @@
           <div>
             <label>
               <input type="checkbox" name="include_kenpin" checked> 検品費用
-              <input type="number" name="kenpin_time" step="any" placeholder="窯分の検品時間" style="width:150px;">
+              <input type="number" name="kenpin_time" step="any" placeholder="窯分の検品に要する時間" style="width:150px;">
               <span id="kenpin_cost_display">合計金額: 0</span>
             </label>
           </div>
@@ -306,7 +315,7 @@
           </div>
         </fieldset>
 
-        <!-- 販売管理費（従来通りダミー） -->
+        <!-- 販売管理費（従来通り） -->
         <fieldset>
           <legend>販売管理費 (オン/オフ選択)</legend>
           <label><input type="checkbox" name="include_nouhin_jinkenhi"> 納品（直納）の人件費</label><br>
@@ -355,8 +364,7 @@
         })
         .then(response => {
           if (!response.ok) {
-            // 万が一サーバー側がエラーを返した場合の処理
-            throw new Error("サーバーエラー");
+            return response.json().then(data => { throw data; });
           }
           return response.json();
         })
@@ -398,12 +406,8 @@
               "合計金額: " + data.paint_cost;
           document.getElementById('logo_copper_cost_display').innerText =
               "合計金額: " + data.logo_copper_cost;
-          document.getElementById('glaze_material_cost_display').innerText =
-              "合計金額: " + data.glaze_material_cost;
-          document.getElementById('main_firing_gas_cost_display').innerText =
-              "合計金額: " + data.main_firing_gas_cost;
-          document.getElementById('transfer_sheet_cost_display').innerText =
-              "合計金額: " + data.transfer_sheet_cost;
+          
+          // ★ 材料費項目-小計の表示追加
           document.getElementById('genzairyousyoukei_coefficient_display').innerText =
               "材料費項目-小計: " + data.genzairyousyoukei_coefficient;
 
@@ -438,17 +442,85 @@
               "合計金額: " + data.kenpin_cost;
           document.getElementById('print_kakouchin_cost_display').innerText =
               "合計金額: " + data.print_kakouchin_cost;
+          document.getElementById('glaze_material_cost_display').innerText =
+              "合計金額: " + data.glaze_material_cost;
+          document.getElementById('main_firing_gas_cost_display').innerText =
+              "合計金額: " + data.main_firing_gas_cost;
+          document.getElementById('transfer_sheet_cost_display').innerText =
+              "合計金額: " + data.transfer_sheet_cost;
+
+          // ★ 製造項目-小計の表示追加
           document.getElementById('seizousyoukei_coefficient_display').innerText =
               "製造項目-小計: " + data.seizousyoukei_coefficient;
         })
-        .catch(err => {
-          console.warn("計算エラー:", err);
-          const msg = "サーバーエラーが発生しました";
-          // 必要に応じて表示をリセットするなどの処理を実装
-          document.getElementById('production_plus_sales_display').innerText = msg;
-          document.getElementById('profit_amount_display').innerText = msg;
-          document.getElementById('profit_ratio_display').innerText = msg;
-          // ...以下も同様にリセット等...
+        .catch(error => {
+          const msg = "入力項目が不十分です";
+          document.getElementById('production_plus_sales_display').innerText =
+              "製造原価＋販売管理費: " + msg;
+          document.getElementById('profit_amount_display').innerText =
+              "利益額: " + msg;
+          document.getElementById('profit_ratio_display').innerText =
+              "利益率: " + msg;
+          document.getElementById('raw_material_cost_total_display').innerText =
+              "原材料費合計: " + msg;
+          document.getElementById('raw_material_cost_ratio_display').innerText =
+              "原材料費原価率: " + msg;
+          document.getElementById('yield_coefficient_display').innerText =
+              "歩留まり係数: " + msg;
+          document.getElementById('manufacturing_cost_total_display').innerText =
+              "製造販管費合計: " + msg;
+          document.getElementById('manufacturing_cost_ratio_display').innerText =
+              "製造販管費原価率: " + msg;
+          document.getElementById('sales_admin_cost_total_display').innerText =
+              "販売管理費合計: " + msg;
+          document.getElementById('sales_admin_cost_ratio_display').innerText =
+              "販売管理費率: " + msg;
+          
+          // 製造販管費各項目もエラー表示
+          document.getElementById('chumikin_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('shiagechin_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('haiimonochin_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('seisojiken_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('soyakeire_dashi_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('soyakebarimono_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('doban_hari_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('hassui_kakouchin_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('shiyu_hiyou_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('shiyu_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('kamairi_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('kamadashi_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('hamasuri_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('kenpin_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('print_kakouchin_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('glaze_material_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('main_firing_gas_cost_display').innerText =
+              "合計金額: " + msg;
+          document.getElementById('transfer_sheet_cost_display').innerText =
+              "合計金額: " + msg;
+          
+          // ★ 製造項目-小計もエラー表示
+          document.getElementById('seizousyoukei_coefficient_display').innerText =
+              "製造項目-小計: " + msg;
+          
+          // ★ 材料費項目-小計もエラー表示
+          document.getElementById('genzairyousyoukei_coefficient_display').innerText =
+              "材料費項目-小計: " + msg;
         });
       }
 
