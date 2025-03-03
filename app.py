@@ -3,9 +3,7 @@ from flask_mail import Mail
 import os
 import json
 from db import get_connection
-
-# blueprint 読み込み
-from blueprints.dashboard import dashboard as dashboard_blueprint
+from blueprints.dashboard import dashboard_bp
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -20,7 +18,7 @@ app.config['MAIL_DEFAULT_SENDER'] = 'nworks12345@gmail.com'
 mail = Mail(app)
 
 # Blueprint登録: blueprint名='dashboard'、URLプリフィックスは空にしている
-app.register_blueprint(dashboard_blueprint, url_prefix='')
+app.register_blueprint(dashboard_bp, url_prefix='')
 
 if __name__ == '__main__':
     app.run(debug=True)
