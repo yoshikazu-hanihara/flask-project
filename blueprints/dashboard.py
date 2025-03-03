@@ -429,14 +429,19 @@ def assemble_dashboard_data(
 
 
 
-@dashboard.route('/dashboard', endpoint='dashboard')
-def dashboard_page():
-    """ダッシュボード表示"""
+@dashboard.route('/dashboard')
+def dashboard():
+    """
+    ダッシュボード画面を表示
+    """
     return render_template('dashboard.html')
 
 
 @dashboard.route('/dashboard_post', methods=['POST'])
 def dashboard_post():
+    """
+    フォーム送信されて計算・結果表示する例
+    """
     try:
         inp = parse_input_data(request.form)
     except ValueError as e:
