@@ -429,10 +429,10 @@ def assemble_dashboard_data(
 
 
 # ---- 修正ポイント: endpoint='dashboard' を指定 ----
-@dashboard.route('/dashboard', endpoint='dashboard')
-def dashboard_page():
-    """ダッシュボード表示"""
+@dashboard.route('/', endpoint='dashboard')
+def dashboard():
     return render_template('dashboard.html')
+
 
 
 @dashboard.route('/dashboard_post', methods=['POST'])
