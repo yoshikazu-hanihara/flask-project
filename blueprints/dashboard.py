@@ -16,9 +16,12 @@ FIRING_GAS_CONSTANT      = 370
 MOLD_DIVISOR             = 100
 HOURLY_WAGE              = 3000
 
-dashboard = Blueprint('dashboard', __name__)
+# --- 修正ポイント ---
+# 1) 「dashboard = Blueprint('dashboard', __name__)」 を削除し、
+#    dashboard_bp のみを Blueprint オブジェクトとして使用
+dashboard_bp = Blueprint('dashboard', __name__)
 
-@dashboard.app_template_filter('format_thousand')
+@dashboard_bp.app_template_filter('format_thousand')
 def format_thousand(value):
     try:
         value = int(value)
@@ -284,10 +287,8 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         print_kakouchin_cost = print_kakouchin_unit * order_quantity
 
     seizousyoukei_coefficient = 0  # 1個あたり計算の例
-    # ... 実際は上記の unit などを足して算出
-    #   (元コードが未完成なので省略します)
+    # ... (本来は合計するなどの処理が必要)
 
-    # 歩留まり加算の例
     yield_coefficient = 0
     # yield_coefficient = (seizousyoukei_coefficient + raw_dict["genzairyousyoukei_coefficient"]) * loss_defective
 
@@ -428,13 +429,15 @@ def assemble_dashboard_data(
     }
 
 
+# --- ここからすべてを dashboard_bp で定義 ---
 
-@dashboard.route('/dashboard')
+@dashboard_bp.route('/dashboard')
 def dashboard():
+    """ダッシュボード表示"""
     return render_template('dashboard.html')
 
 
-@dashboard.route('/dashboard_post', methods=['POST'])
+@dashboard_bp.route('/dashboard_post', methods=['POST'])
 def dashboard_post():
     try:
         inp = parse_input_data(request.form)
@@ -489,7 +492,7 @@ def dashboard_post():
     return render_template('dashboard_result.html', dashboard_data=dashboard_data)
 
 
-@dashboard.route('/calculate', methods=['POST'])
+@dashboard_bp.route('/calculate', methods=['POST'])
 def calculate():
     try:
         inp = parse_input_data(request.form)
