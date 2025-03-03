@@ -1,13 +1,9 @@
-# calculate.py
-# 定数・係数の一括管理
-from flask import Blueprint, request, jsonify
-from utils.validators import parse_input_data
-from utils.calculators import calculate_raw_material_costs, calculate_manufacturing_costs, calculate_sales_admin_cost
-from utils.helpers import assemble_dashboard_data, round_values_in_dict
-
-calculate_bp = Blueprint('calculate', __name__)
-
-@calculate_bp.route('/calculate', methods=['POST'])
-def calculate():
-    # 元の処理をここに移植
-    pass
+# constants.py
+DOHDAI_COEFFICIENT       = 0.042
+DRYING_FUEL_COEFFICIENT  = 0.025
+BISQUE_FUEL_COEFFICIENT  = 0.04
+HASSUI_COEFFICIENT       = 0.04
+PAINT_COEFFICIENT        = 0.05
+FIRING_GAS_CONSTANT      = 370
+MOLD_DIVISOR             = 100
+HOURLY_WAGE              = 3000
