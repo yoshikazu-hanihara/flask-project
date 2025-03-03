@@ -16,7 +16,7 @@ FIRING_GAS_CONSTANT      = 370
 MOLD_DIVISOR             = 100
 HOURLY_WAGE              = 3000
 
-dashboard = Blueprint('', __name__)
+dashboard = Blueprint('dashboard', __name__)
 
 @dashboard.app_template_filter('format_thousand')
 def format_thousand(value):
