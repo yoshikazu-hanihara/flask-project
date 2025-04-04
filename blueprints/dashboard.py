@@ -431,13 +431,13 @@ def assemble_dashboard_data(
 
 # --- ここからすべてを dashboard_bp で定義 ---
 
-@dashboard_bp.route('/dashboard')
+@dashboard_bp.route('/')
 def dashboard():
     """ダッシュボード表示"""
     return render_template('dashboard.html')
 
 
-@dashboard_bp.route('/dashboard_post', methods=['POST'])
+@dashboard_bp.route('/post', methods=['POST'])
 def dashboard_post():
     try:
         inp = parse_input_data(request.form)
