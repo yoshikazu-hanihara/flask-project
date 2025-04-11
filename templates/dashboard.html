@@ -358,7 +358,7 @@
 
       function updateCalculation(){
         const formData = new FormData(form);
-        fetch('/calculate', {
+        fetch('/dashboard/calculate', {
           method: 'POST',
           body: formData
         })
