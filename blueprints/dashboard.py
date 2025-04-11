@@ -302,9 +302,7 @@ def assemble_dashboard_data(
     profit_amount = total_cost - production_plus_sales
     profit_ratio  = (profit_amount / total_cost * 100) if total_cost > 0 else 0
 
-    manufacturing_cost_ratio = 0
-    if total_cost > 0:
-        manufacturing_cost_ratio = (manufacturing_cost_total / total_cost) * 100
+    manufacturing_cost_ratio = man_dict.get("manufacturing_cost_ratio", 0)
 
     return {
         "sales_price": sales_price,
