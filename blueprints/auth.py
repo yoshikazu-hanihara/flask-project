@@ -26,7 +26,7 @@ def login():
             session.clear()
             session['user_id'] = user['id']
             session['email'] = user['email']
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.dashboard'))
         else:
             return "ログイン失敗: メールアドレスまたはパスワードが違います。"
 
