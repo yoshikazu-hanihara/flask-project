@@ -229,7 +229,7 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     seizousyoukei_coefficient = seizousyoukei_total / order_quantity if order_quantity else 0
     yield_coefficient = (seizousyoukei_coefficient + raw_material_cost_total / order_quantity) * loss_defective
     manufacturing_cost_total = seizousyoukei_total + (yield_coefficient * order_quantity)
-    manufacturing_cost_ratio = (manufacturing_cost_total / (sales_price * order_quantity)) * 100 if sales_price * order_quantity else 0
+    manufacturing_cost_ratio = ((seizousyoukei_coefficient + yield_coefficient) / sales_price * 100) if sales_price else 0
 
     return {
         "chumikin_cost": chumikin_cost,
