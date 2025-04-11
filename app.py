@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from flask_mail import Mail
 from blueprints.dashboard import dashboard_bp
 from blueprints.auth import auth
+from estimate import estimate_blueprint
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -16,6 +17,7 @@ mail = Mail(app)
 
 app.register_blueprint(auth, url_prefix='')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+app.register_blueprint(estimate_blueprint, url_prefix='/estimate')
 
 @app.route('/')
 def index():
