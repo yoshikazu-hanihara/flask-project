@@ -27,7 +27,7 @@ def format_thousand(value):
     except:
         return value
 
-def round_values_in_dict(data, digits=2):
+def round_values_in_dict(data, digits=0):
     for key, val in data.items():
         if isinstance(val, float):
             data[key] = round(val, digits)
