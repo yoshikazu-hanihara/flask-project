@@ -394,7 +394,7 @@ def dashboard_post():
     sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, total_cost)
 
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
-    round_values_in_dict(dashboard_data, digits=2)
+    round_values_in_dict(dashboard_data, digits=0)
 
     estimate_id = None
     if 'user_id' in session:
@@ -449,6 +449,6 @@ def calculate():
     sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, total_cost)
 
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
-    round_values_in_dict(dashboard_data, digits=2)
+    round_values_in_dict(dashboard_data, digits=0)
 
     return jsonify(dashboard_data)
