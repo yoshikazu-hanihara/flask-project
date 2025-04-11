@@ -16,9 +16,7 @@ FIRING_GAS_CONSTANT      = 370
 MOLD_DIVISOR             = 100
 HOURLY_WAGE              = 3000
 
-# --- 修正ポイント ---
-# 1) 「dashboard = Blueprint('dashboard', __name__)」 を削除し、
-#    dashboard_bp のみを Blueprint オブジェクトとして使用
+
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.app_template_filter('format_thousand')
@@ -200,103 +198,38 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     loss_defective  = inp["loss_defective"]
     sales_price     = inp["sales_price"]
 
-    chumikin_cost          = 0
-    shiagechin_cost        = 0
-    haiimonochin_cost      = 0
-    seisojiken_cost        = 0
-    soyakeire_dashi_cost   = 0
-    soyakebarimono_cost    = 0
-    doban_hari_cost        = 0
-    hassui_kakouchin_cost  = 0
-    shiyu_hiyou_cost       = 0
-    shiyu_cost             = 0
-    kamairi_cost           = 0
-    kamadashi_cost         = 0
-    hamasuri_cost          = 0
-    kenpin_cost            = 0
-    print_kakouchin_cost   = 0
+    chumikin_cost = float(form.get('chumikin_unit', 0)) * order_quantity if include_chumikin else 0
+    shiagechin_cost = float(form.get('shiagechin_unit', 0)) * order_quantity if include_shiagechin else 0
 
-    if include_chumikin:
-        chumikin_unit = float(form.get('chumikin_unit', '0'))
-        chumikin_cost = chumikin_unit * order_quantity
+    haiimonochin_cost = ((mold_unit_price / float(form.get('sawaimono_work', 1))) * order_quantity) if include_haiimonochin else 0
+    seisojiken_cost = ((HOURLY_WAGE / float(form.get('seisojiken_work', 1))) * order_quantity) if include_seisojiken else 0
+    soyakeire_dashi_cost = ((HOURLY_WAGE / float(form.get('soyakeire_work', 1))) * order_quantity) if include_soyakeire_dashi else 0
+    soyakebarimono_cost = ((HOURLY_WAGE / float(form.get('soyakebarimono_work', 1))) * order_quantity) if include_soyakebarimono else 0
 
-    if include_shiagechin:
-        shiagechin_unit = float(form.get('shiagechin_unit', '0'))
-        shiagechin_cost = shiagechin_unit * order_quantity
+    doban_hari_cost = float(form.get('doban_hari_unit', 0)) * order_quantity if include_doban_hari else 0
+    hassui_kakouchin_cost = ((HOURLY_WAGE / float(form.get('hassui_kakouchin_work', 1))) * order_quantity) if include_hassui_kakouchin else 0
 
-    if include_haiimonochin:
-        sawaimono_work = float(form.get('sawaimono_work', '0') or 0)
-        if sawaimono_work > 0:
-            haiimonochin_cost = (mold_unit_price / sawaimono_work) * order_quantity
+    shiyu_hiyou_cost = float(form.get('shiyu_hiyou_unit', 0)) * order_quantity if include_shiyu_hiyou else 0
+    shiyu_cost = ((HOURLY_WAGE / float(form.get('shiyu_work', 1))) * order_quantity) if include_shiyu_cost else 0
 
-    if include_seisojiken:
-        seisojiken_work = float(form.get('seisojiken_work', '0') or 0)
-        if seisojiken_work > 0:
-            seisojiken_cost = (HOURLY_WAGE / seisojiken_work) * order_quantity
+    kamairi_cost = (HOURLY_WAGE * float(form.get('kamairi_time', 0)) / kiln_count * order_quantity) if include_kamairi else 0
+    kamadashi_cost = (HOURLY_WAGE * float(form.get('kamadashi_time', 0)) / kiln_count * order_quantity) if include_kamadashi else 0
+    hamasuri_cost = (HOURLY_WAGE * float(form.get('hamasuri_time', 0)) / kiln_count * order_quantity) if include_hamasuri else 0
+    kenpin_cost = (HOURLY_WAGE * float(form.get('kenpin_time', 0)) / kiln_count * order_quantity) if include_kenpin else 0
+    print_kakouchin_cost = float(form.get('print_kakouchin_unit', 0)) * order_quantity if include_print_kakouchin else 0
 
-    if include_soyakeire_dashi:
-        soyakeire_work = float(form.get('soyakeire_work', '0') or 0)
-        if soyakeire_work > 0:
-            soyakeire_dashi_cost = (HOURLY_WAGE / soyakeire_work) * order_quantity
+    seizousyoukei_total = (
+        chumikin_cost + shiagechin_cost + haiimonochin_cost + seisojiken_cost +
+        soyakeire_dashi_cost + soyakebarimono_cost + doban_hari_cost +
+        hassui_kakouchin_cost + shiyu_hiyou_cost + shiyu_cost +
+        kamairi_cost + kamadashi_cost + hamasuri_cost +
+        kenpin_cost + print_kakouchin_cost
+    )
 
-    if include_soyakebarimono:
-        soyakebarimono_work = float(form.get('soyakebarimono_work', '0') or 0)
-        if soyakebarimono_work > 0:
-            soyakebarimono_cost = (HOURLY_WAGE / soyakebarimono_work) * order_quantity
-
-    if include_doban_hari:
-        doban_hari_unit = float(form.get('doban_hari_unit', '0') or 0)
-        doban_hari_cost  = doban_hari_unit * order_quantity
-
-    if include_hassui_kakouchin:
-        hassui_kakouchin_work = float(form.get('hassui_kakouchin_work', '0') or 0)
-        if hassui_kakouchin_work > 0:
-            hassui_kakouchin_cost = (HOURLY_WAGE / hassui_kakouchin_work) * order_quantity
-
-    if include_shiyu_hiyou:
-        shiyu_hiyou_unit = float(form.get('shiyu_hiyou_unit', '0') or 0)
-        shiyu_hiyou_cost  = shiyu_hiyou_unit * order_quantity
-
-    if include_shiyu_cost:
-        shiyu_work = float(form.get('shiyu_work', '0') or 0)
-        if shiyu_work > 0:
-            shiyu_cost = (HOURLY_WAGE / shiyu_work) * order_quantity
-
-    if include_kamairi:
-        kamairi_time = float(form.get('kamairi_time', '0') or 0)
-        if kiln_count > 0 and kamairi_time > 0:
-            kamairi_cost = (HOURLY_WAGE * kamairi_time / kiln_count) * order_quantity
-
-    if include_kamadashi:
-        kamadashi_time = float(form.get('kamadashi_time', '0') or 0)
-        if kiln_count > 0 and kamadashi_time > 0:
-            kamadashi_cost = (HOURLY_WAGE * kamadashi_time / kiln_count) * order_quantity
-
-    if include_hamasuri:
-        hamasuri_time = float(form.get('hamasuri_time', '0') or 0)
-        if kiln_count > 0 and hamasuri_time > 0:
-            hamasuri_cost = (HOURLY_WAGE * hamasuri_time / kiln_count) * order_quantity
-
-    if include_kenpin:
-        kenpin_time = float(form.get('kenpin_time', '0') or 0)
-        if kiln_count > 0 and kenpin_time > 0:
-            kenpin_cost = (HOURLY_WAGE * kenpin_time / kiln_count) * order_quantity
-
-    if include_print_kakouchin:
-        print_kakouchin_unit = float(form.get('print_kakouchin_unit', '0') or 0)
-        print_kakouchin_cost = print_kakouchin_unit * order_quantity
-
-    seizousyoukei_coefficient = 0  # 1個あたり計算の例
-    # ... (本来は合計するなどの処理が必要)
-
-    yield_coefficient = 0
-    # yield_coefficient = (seizousyoukei_coefficient + raw_dict["genzairyousyoukei_coefficient"]) * loss_defective
-
-    manufacturing_cost_total = seizousyoukei_coefficient + yield_coefficient
-
-    manufacturing_cost_ratio = 0
-    if sales_price > 0:
-        manufacturing_cost_ratio = manufacturing_cost_total / sales_price
+    seizousyoukei_coefficient = seizousyoukei_total / order_quantity if order_quantity else 0
+    yield_coefficient = (seizousyoukei_coefficient + raw_material_cost_total / order_quantity) * loss_defective
+    manufacturing_cost_total = seizousyoukei_total + (yield_coefficient * order_quantity)
+    manufacturing_cost_ratio = (manufacturing_cost_total / (sales_price * order_quantity)) * 100 if sales_price * order_quantity else 0
 
     return {
         "chumikin_cost": chumikin_cost,
@@ -315,9 +248,10 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         "kenpin_cost": kenpin_cost,
         "print_kakouchin_cost": print_kakouchin_cost,
 
+        "seizousyoukei_coefficient": seizousyoukei_coefficient,
         "yield_coefficient": yield_coefficient,
         "manufacturing_cost_total": manufacturing_cost_total,
-        "seizousyoukei_coefficient": seizousyoukei_coefficient
+        "manufacturing_cost_ratio": manufacturing_cost_ratio,
     }
 
 def calculate_sales_admin_cost(form, total_cost):
