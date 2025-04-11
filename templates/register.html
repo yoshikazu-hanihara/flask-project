@@ -9,7 +9,7 @@
 <body>
   <div class="wrapper">
   <h2>ユーザー登録</h2>
-  <form action="{{ url_for('register') }}" method="post">
+  <form action="{{ url_for('auth.register') }}" method="post">
     <div>
       <label for="email">メールアドレス:</label>
       <input type="email" name="email" id="email" required>
@@ -25,7 +25,7 @@
 
   <p style="margin-top: 20px;">
     既にアカウントをお持ちの方は 
-    <a href="{{ url_for('login') }}">ログインページ</a>へ
+    <a href="{{ url_for('auth.login') }}">ログインページ</a>へ
   </p>
   </div>
 </body>
