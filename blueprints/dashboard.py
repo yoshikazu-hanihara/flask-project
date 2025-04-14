@@ -260,9 +260,9 @@ def calculate_sales_admin_cost(form, total_cost):
 
     sales_admin_cost_total = 0
     if include_nouhin_jinkenhi:
-        sales_admin_cost_total += 500
+        sales_admin_cost_total += 7500
     if include_gasoline:
-        sales_admin_cost_total += 300
+        sales_admin_cost_total += 750
 
     sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
     return sales_admin_cost_total, sales_admin_cost_ratio
