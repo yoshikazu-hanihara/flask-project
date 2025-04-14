@@ -392,7 +392,7 @@ def dashboard_post():
 
     man_dict = calculate_manufacturing_costs(inp, request.form, raw_dict["raw_material_cost_total"])
 
-    sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, total_cost)
+    sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, inp["order_quantity"], total_cost)
 
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
     round_values_in_dict(dashboard_data, digits=0)
