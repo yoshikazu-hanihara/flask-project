@@ -254,18 +254,21 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
         "manufacturing_cost_ratio": manufacturing_cost_ratio,
     }
 
-def calculate_sales_admin_cost(form, total_cost):
+def calculate_sales_admin_cost(form, order_quantity, total_cost):
     include_nouhin_jinkenhi = form.get('include_nouhin_jinkenhi')
     include_gasoline        = form.get('include_gasoline')
 
-    sales_admin_cost_total = 0
+    total_sales_admin_cost = 0
     if include_nouhin_jinkenhi:
-        sales_admin_cost_total += 7500
+        total_sales_admin_cost += 7500
     if include_gasoline:
-        sales_admin_cost_total += 750
+        total_sales_admin_cost += 750
+
+    sales_admin_cost_total = total_sales_admin_cost / order_quantity if order_quantity else 0
 
     sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
     return sales_admin_cost_total, sales_admin_cost_ratio
+
 
 def assemble_dashboard_data(
     inp,
