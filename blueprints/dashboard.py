@@ -154,10 +154,8 @@ def calculate_raw_material_costs(inp, form):
         + glaze_material_cost + main_firing_gas_cost + transfer_sheet_cost
     )
 
-    raw_material_cost_ratio = 0
-    if sales_price > 0:
-        raw_material_cost_ratio = raw_material_cost_total / sales_price
-
+    raw_material_cost_ratio = (genzairyousyoukei_coefficient * (1 + loss_defective)) / sales_price * 100          # 1＋ロスの意味は、『ロス分も含めた実際にかかる材料費』
+    
     return {
         "dohdai_cost": dohdai_cost,
         "kata_cost": kata_cost,
