@@ -136,17 +136,17 @@ def calculate_raw_material_costs(inp, form):
         transfer_sheet_cost       = transfer_sheet_unit_price * order_quantity
 
     genzairyousyoukei_coefficient = (
-        (product_weight * DOHDAI_COEFFICIENT if include_dohdai else 0)
-        + (((mold_unit_price / mold_count) / MOLD_DIVISOR) if include_kata and mold_count>0 else 0)
-        + (product_weight * DRYING_FUEL_COEFFICIENT if include_drying_fuel else 0)
-        + (product_weight * BISQUE_FUEL_COEFFICIENT if include_bisque_fuel else 0)
-        + (product_weight * HASSUI_COEFFICIENT if include_hassui else 0)
-        + (product_weight * PAINT_COEFFICIENT if include_paint else 0)
-        + (copper_unit_price if include_logo_copper else 0)
-        + ((glaze_cost / poly_count) if include_glaze_material and poly_count>0 else 0)
-        + ((gas_unit_price * FIRING_GAS_CONSTANT) if include_main_firing_gas else 0)
-        + (transfer_sheet_unit_price if include_transfer_sheet else 0)
-    )
+    (product_weight * DOHDAI_COEFFICIENT if include_dohdai else 0)
+    + ((mold_unit_price / mold_count) if include_kata and mold_count > 0 else 0)
+    + (product_weight * DRYING_FUEL_COEFFICIENT if include_drying_fuel else 0)
+    + (product_weight * BISQUE_FUEL_COEFFICIENT if include_bisque_fuel else 0)
+    + (product_weight * HASSUI_COEFFICIENT if include_hassui else 0)
+    + (product_weight * PAINT_COEFFICIENT if include_paint else 0)
+    + (copper_unit_price if include_logo_copper else 0)
+    + ((glaze_cost / poly_count) if include_glaze_material and poly_count > 0 else 0)
+    + ((gas_unit_price * FIRING_GAS_CONSTANT / kiln_count) if include_main_firing_gas and kiln_count > 0 else 0)
+    + (transfer_sheet_unit_price if include_transfer_sheet else 0)
+)
 
     raw_material_cost_total = (
         dohdai_cost + kata_cost + drying_fuel_cost + bisque_fuel_cost
