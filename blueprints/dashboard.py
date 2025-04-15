@@ -154,7 +154,9 @@ def calculate_raw_material_costs(inp, form):
         + glaze_material_cost + main_firing_gas_cost + transfer_sheet_cost
     )
 
-    raw_material_cost_ratio = (genzairyousyoukei_coefficient * (1 + loss_defective)) / sales_price * 100
+    raw_material_cost_ratio = (
+    genzairyousyoukei_coefficient * (1 + inp["loss_defective"])
+) / sales_price * 100
     # 1＋ロスの意味は、「ロス分も含めた実際にかかる材料費」
 
     
