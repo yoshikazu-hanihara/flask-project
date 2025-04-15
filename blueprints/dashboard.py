@@ -137,7 +137,7 @@ def calculate_raw_material_costs(inp, form):
 
     genzairyousyoukei_coefficient = (
     (product_weight * DOHDAI_COEFFICIENT if include_dohdai else 0)
-    + ((mold_unit_price / mold_count) if include_kata and mold_count > 0 else 0)
+    + ((mold_unit_price / mold_count / MOLD_DIVISOR) if include_kata and mold_count > 0 else 0)
     + (product_weight * DRYING_FUEL_COEFFICIENT if include_drying_fuel else 0)
     + (product_weight * BISQUE_FUEL_COEFFICIENT if include_bisque_fuel else 0)
     + (product_weight * HASSUI_COEFFICIENT if include_hassui else 0)
