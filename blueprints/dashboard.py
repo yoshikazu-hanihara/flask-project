@@ -304,8 +304,15 @@ def assemble_dashboard_data(
     production_cost_total = raw_material_cost_total + manufacturing_cost_total
     production_plus_sales = production_cost_total + sales_admin_cost_total
 
-    profit_amount = total_cost - production_plus_sales
-    profit_ratio  = (profit_amount / total_cost * 100) if total_cost > 0 else 0
+    profit_amount = sales_price - (
+        genzairyousyoukei_coefficient +
+        seizousyoukei_coefficient +
+        yield_coefficient +
+        sales_admin_cost_total
+    )
+    
+    profit_amount_total = profit_amount * order_quantity
+    profit_ratio = (profit_amount / sales_price) * 100 if sales_price else 0
 
     manufacturing_cost_ratio = man_dict.get("manufacturing_cost_ratio", 0)
 
@@ -362,6 +369,7 @@ def assemble_dashboard_data(
         "production_cost_total": production_cost_total,
         "production_plus_sales": production_plus_sales,
         "profit_amount": profit_amount,
+        "profit_amount_total": profit_amount_total,
         "profit_ratio": profit_ratio
     }
 
