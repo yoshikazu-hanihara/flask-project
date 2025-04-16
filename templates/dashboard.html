@@ -332,7 +332,8 @@
     <!-- 結果表示エリア（フォーム外） -->
     <div id="tohki-goukei" class="formbox-0">
       <p id="production_plus_sales_display">製造原価＋販売管理費: （計算後に表示）</p>
-      <p id="profit_amount_display">利益額: （計算後に表示）</p>
+      <p id="profit_amount_display">利益額（1個あたり）: （計算後に表示）</p>
+      <p id="profit_amount_total_display">利益額（合計）: （計算後に表示）</p>
       <p id="profit_ratio_display">利益率: （計算後に表示）</p>
     </div>
 
@@ -374,7 +375,9 @@
           document.getElementById('production_plus_sales_display').innerText =
               "製造原価＋販売管理費: " + data.production_plus_sales;
           document.getElementById('profit_amount_display').innerText =
-              "利益額: " + data.profit_amount;
+              "利益額（1個あたり）: " + data.profit_amount;
+          document.getElementById('profit_amount_total_display').innerText =
+              "利益額（合計）: " + data.profit_amount_total;
           document.getElementById('profit_ratio_display').innerText =
               "利益率: " + data.profit_ratio.toFixed(2) + "%";
           document.getElementById('raw_material_cost_total_display').innerText =
@@ -388,7 +391,7 @@
           document.getElementById('manufacturing_cost_ratio_display').innerText =
               "製造販管費原価率: " + data.manufacturing_cost_ratio.toFixed(2) + "%";
           document.getElementById('sales_admin_cost_total_display').innerText =
-              "販売管理費合計: " + data.sales_admin_cost_total;
+              "販売管理費（1個あたり）: " + data.sales_admin_cost_total;
           document.getElementById('sales_admin_cost_ratio_display').innerText =
               "販売管理費率: " + data.sales_admin_cost_ratio.toFixed(2) + "%";
 
@@ -459,9 +462,9 @@
           document.getElementById('production_plus_sales_display').innerText =
               "製造原価＋販売管理費: " + msg;
           document.getElementById('profit_amount_display').innerText =
-              "利益額: " + msg;
-          document.getElementById('profit_ratio_display').innerText =
-              "利益率: " + msg;
+              "利益額（1個あたり）: " + msg;
+          document.getElementById('profit_amount_total_display').innerText =
+              "利益額（合計）: " + msg;
           document.getElementById('raw_material_cost_total_display').innerText =
               "原材料費合計: " + msg;
           document.getElementById('raw_material_cost_ratio_display').innerText =
