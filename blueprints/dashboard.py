@@ -305,11 +305,12 @@ def assemble_dashboard_data(
     production_plus_sales = production_cost_total + sales_admin_cost_total
 
     profit_amount = sales_price - (
-        genzairyousyoukei_coefficient +
-        seizousyoukei_coefficient +
-        yield_coefficient +
-        sales_admin_cost_total
-    )
+    raw_dict.get("genzairyousyoukei_coefficient", 0) +
+    man_dict.get("seizousyoukei_coefficient", 0) +
+    man_dict.get("yield_coefficient", 0) +
+    sales_admin_cost_total
+)
+
     
     profit_amount_total = profit_amount * order_quantity
     profit_ratio = (profit_amount / sales_price) * 100 if sales_price else 0
