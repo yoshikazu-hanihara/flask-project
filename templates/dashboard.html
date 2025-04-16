@@ -379,13 +379,15 @@
           document.getElementById('profit_amount_total_display').innerText =
               "利益額（合計）: " + data.profit_amount_total;
           document.getElementById('profit_ratio_display').innerText =
-              "利益率: " + data.profit_ratio.toFixed(2) + "%";
-          document.getElementById('raw_material_cost_total_display').innerText =
-              "原材料費合計: " + data.raw_material_cost_total;
+              "利益率: " + data.profit_ratio + "%";
           document.getElementById('raw_material_cost_ratio_display').innerText =
-              "原材料費原価率: " + data.raw_material_cost_ratio.toFixed(2) + "%";
+              "原材料費原価率: " + data.raw_material_cost_ratio + "%";
+          document.getElementById('manufacturing_cost_ratio_display').innerText =
+              "製造販管費原価率: " + data.manufacturing_cost_ratio + "%";
+          document.getElementById('sales_admin_cost_ratio_display').innerText =
+              "販売管理費率: " + data.sales_admin_cost_ratio + "%";
           document.getElementById('yield_coefficient_display').innerText =
-              "歩留まり係数: " + data.yield_coefficient.toFixed(2);
+              "歩留まり係数: " + data.yield_coefficient;
           document.getElementById('manufacturing_cost_total_display').innerText =
               "製造販管費合計: " + data.manufacturing_cost_total;
           document.getElementById('manufacturing_cost_ratio_display').innerText =
