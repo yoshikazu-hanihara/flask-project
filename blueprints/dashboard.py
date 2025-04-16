@@ -268,7 +268,16 @@ def calculate_sales_admin_cost(form, order_quantity, total_cost):
 
     sales_admin_cost_total = total_sales_admin_cost / order_quantity if order_quantity else 0
 
-    sales_admin_cost_ratio = (sales_admin_cost_total / total_cost * 100) if total_cost > 0 else 0
+    sales_price = float(form.get('sales_price', 0))
+    order_quantity = int(form.get('order_quantity', 1))
+
+    include_nouhin_jinkenhi_value = 7500 if include_nouhin_jinkenhi else 0
+    include_gasoline_value = 750 if include_gasoline else 0
+
+    sales_admin_cost_ratio = (
+        (include_nouhin_jinkenhi_value + include_gasoline_value) / (sales_price * order_quantity) * 100
+    ) if sales_price > 0 and order_quantity > 0 else 0
+
     return sales_admin_cost_total, sales_admin_cost_ratio
 
 
