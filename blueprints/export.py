@@ -66,7 +66,7 @@ def mail_excel():
             bio.getvalue()
         )
 
-        current_app.extensions["mail"].send(msg)
+        app.extensions["mail"].send(msg)
         flash("メールを送信しました。")
     except Exception as e:
         app.logger.exception("mail_excel failed")
