@@ -335,6 +335,11 @@
       <p id="profit_amount_display">利益額（1個あたり）: （計算後に表示）</p>
       <p id="profit_amount_total_display">利益額（合計）: （計算後に表示）</p>
       <p id="profit_ratio_display">利益率: （計算後に表示）</p>
+    <br>
+      <p>
+        <a href="{{ url_for('export.download_excel') }}" class="btn">Excel をダウンロード</a>
+        <a href="{{ url_for('export.mail_excel') }}"   class="btn">会社宛にメール送信</a>
+      </p>
     </div>
 
     <hr>
