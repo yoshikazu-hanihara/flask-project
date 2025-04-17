@@ -46,27 +46,29 @@ def download_excel():
 
 @export_bp.route('/mail')
 def mail_excel():
-    data = session.get('dashboard_data')
-    if not data:
-        flash("先に見積りを計算してください。")
-        return redirect(url_for('dashboard.dashboard'))
+    try:
+        data = session.get('dashboard_data')
+        if not data:
+            flash("先に見積りを計算してください。")
+            return redirect(url_for('dashboard.dashboard'))
 
-    bio = _build_workbook(data)
-    filename = f"estimate_{datetime.datetime.now():%Y%m%d_%H%M%S}.xlsx"
+        bio = _build_workbook(data)
+        filename = f"estimate_{datetime.datetime.now():%Y%m%d_%H%M%S}.xlsx"
 
-    msg = Message(
-        subject="新しい見積りデータ",
-        recipients=["your_company@example.com"],   # ★宛先を変更
-        body="自動生成された見積り Excel を添付します。"
-    )
-    msg.attach(filename,
-               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-               bio.getvalue())
+        msg = Message(
+            subject="新しい見積もりデータ",
+            recipients=["nworks12345@gmail.com"],
+            body="自動生成された見積もり Excel を添付します。"
+        )
+        msg.attach(
+            filename,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            bio.getvalue()
+        )
 
-    app.extensions["mail"].send(msg)
-    flash("メールを送信しました。")
+        current_app.extensions["mail"].send(msg)
+        flash("メールを送信しました。")
     except Exception as e:
-        # ログに残す
         current_app.logger.exception("mail_excel failed")
         flash(f"メール送信に失敗しました: {e}")
     return redirect(url_for('dashboard.dashboard'))
