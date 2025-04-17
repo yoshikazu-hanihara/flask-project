@@ -499,4 +499,7 @@ def calculate():
     dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
     round_values_in_dict(dashboard_data, digits=0)
 
+    # AJAX 経由でもセッションに保存
+    session['dashboard_data'] = dashboard_data
+
     return jsonify(dashboard_data)
