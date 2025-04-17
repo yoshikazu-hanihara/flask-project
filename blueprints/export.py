@@ -69,6 +69,6 @@ def mail_excel():
         current_app.extensions["mail"].send(msg)
         flash("メールを送信しました。")
     except Exception as e:
-        current_app.logger.exception("mail_excel failed")
+        app.logger.exception("mail_excel failed")
         flash(f"メール送信に失敗しました: {e}")
     return redirect(url_for('dashboard.dashboard'))
