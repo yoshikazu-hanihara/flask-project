@@ -32,6 +32,15 @@ def safe_float(val: str | None) -> float:
         return float(val) if val not in (None, '', ' ') else 0.0
     except ValueError:
         return 0.0
+
+
+
+def safe_div(numerator: float, denominator: float) -> float:
+    """
+    denominator<=0 の場合 0.0 を返す（0除算回避）。
+    """
+    return numerator / denominator if denominator > 0 else 0.0
+    
 # --------------------------------------------- #
 
 
@@ -222,17 +231,16 @@ def calculate_manufacturing_costs(inp, form, raw_material_cost_total):
     chumikin_cost  = safe_float(form.get('chumikin_unit'))  * order_quantity if include_chumikin  else 0
     shiagechin_cost= safe_float(form.get('shiagechin_unit'))* order_quantity if include_shiagechin else 0
 
-    haiimonochin_cost   = ((mold_unit_price / safe_float(form.get('sawaimono_work', 1))) * order_quantity) if include_haiimonochin else 0
-    seisojiken_cost     = ((HOURLY_WAGE / safe_float(form.get('seisojiken_work', 1)))   * order_quantity) if include_seisojiken   else 0
-    soyakeire_dashi_cost= ((HOURLY_WAGE / safe_float(form.get('soyakeire_work', 1)))    * order_quantity) if include_soyakeire_dashi else 0
-    soyakebarimono_cost = ((HOURLY_WAGE / safe_float(form.get('soyakebarimono_work', 1)))* order_quantity) if include_soyakebarimono else 0
+    haiimonochin_cost   = safe_div(mold_unit_price, safe_float(form.get('sawaimono_work')))       * order_quantity if include_haiimonochin else 0
+    seisojiken_cost     = safe_div(HOURLY_WAGE,   safe_float(form.get('seisojiken_work')))        * order_quantity if include_seisojiken else 0
+    soyakeire_dashi_cost= safe_div(HOURLY_WAGE,   safe_float(form.get('soyakeire_work')))         * order_quantity if include_soyakeire_dashi else 0
+    soyakebarimono_cost = safe_div(HOURLY_WAGE,   safe_float(form.get('soyakebarimono_work')))    * order_quantity if include_soyakebarimono else 0
 
     doban_hari_cost       = safe_float(form.get('doban_hari_unit'))       * order_quantity if include_doban_hari       else 0
-    hassui_kakouchin_cost = ((HOURLY_WAGE / safe_float(form.get('hassui_kakouchin_work', 1))) * order_quantity) if include_hassui_kakouchin else 0
-
+    hassui_kakouchin_cost = safe_div(HOURLY_WAGE, safe_float(form.get('hassui_kakouchin_work')))  * order_quantity if include_hassui_kakouchin else 0
     shiyu_hiyou_cost = safe_float(form.get('shiyu_hiyou_unit')) * order_quantity if include_shiyu_hiyou else 0
-    shiyu_cost       = ((HOURLY_WAGE / safe_float(form.get('shiyu_work', 1))) * order_quantity) if include_shiyu_cost else 0
-
+    shiyu_cost          = safe_div(HOURLY_WAGE,   safe_float(form.get('shiyu_work')))             * order_quantity if include_shiyu_cost else 0
+    
     kamairi_cost  = (HOURLY_WAGE * safe_float(form.get('kamairi_time'))   / kiln_count * order_quantity) if include_kamairi  else 0
     kamadashi_cost= (HOURLY_WAGE * safe_float(form.get('kamadashi_time')) / kiln_count * order_quantity) if include_kamadashi else 0
     hamasuri_cost = (HOURLY_WAGE * safe_float(form.get('hamasuri_time'))  / kiln_count * order_quantity) if include_hamasuri else 0
