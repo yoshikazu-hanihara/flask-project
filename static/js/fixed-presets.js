@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const PRESETS = [
     {
       name: "MMD六角皿S",
+      img : "img/mmd_s.png",
       data: {
         sales_price:           380,
         order_quantity:        1000,
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     {
       name: "ネンド様フェイブ",
+      img : "img/nendosama_fave.png",
       data: {
         sales_price:           450,
         order_quantity:        1000,
@@ -69,40 +71,38 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
   /* =============================================================== */
 
-  /* ボタンを挿入するバー（<div id="preset-bar">）を取得 */
-  const bar = document.getElementById("preset-bar");
-  if (!bar) return;   // テンプレに無ければ何もしない
+  const bar  = document.getElementById("preset-bar");
+  const form = document.getElementById("calc-form");
+  if (!bar || !form) return;
 
-  /* === ② ボタン生成 ============================================= */
+  /* ボタン生成 */
   PRESETS.forEach(preset => {
     const btn = document.createElement("button");
-    btn.className = "btn";
-    btn.textContent = preset.name;
+    btn.className = "preset-btn";
+    btn.innerHTML = `
+      <img src="{{ url_for('static', filename='') }}${preset.img}" alt="${preset.name}">
+      <span>${preset.name}</span>
+    `;
     btn.addEventListener("click", () => applyPreset(preset.data));
     bar.appendChild(btn);
   });
-  /* =============================================================== */
 
-  /* === ③ 一括入力処理 =========================================== */
- function applyPreset(data) {
-  const form = document.getElementById("calc-form");
-  Object.entries(data).forEach(([k, v]) => {
-    const el = form.querySelector(`[name="${k}"]`);
-    if (!el) return;
-    if (el.type === "radio") {
-      form.querySelectorAll(`[name="${k}"]`).forEach(r =>
-        (r.checked = Number(r.value) === Number(v))
-      );
-    } else if (el.type === "checkbox") {
-      el.checked = Boolean(v);
-    } else {
-      el.value = v;
-    }
-  });
-  /* ←ここがポイント ── どれか1つ（sales_priceでOK）に input イベントを送る */
-  const trigger = form.querySelector('[name="sales_price"]');
-  if (trigger) trigger.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
-  /* =============================================================== */
+  /* 値の一括投入 → sales_price に input イベントを発火 */
+  function applyPreset(data) {
+    Object.entries(data).forEach(([k, v]) => {
+      const el = form.querySelector(`[name="${k}"]`);
+      if (!el) return;
+      if (el.type === "radio") {
+        form.querySelectorAll(`[name="${k}"]`).forEach(r => {
+          r.checked = Number(r.value) === Number(v);
+        });
+      } else if (el.type === "checkbox") {
+        el.checked = Boolean(v);
+      } else {
+        el.value = v;
+      }
+    });
+    const trigger = form.querySelector('[name="sales_price"]');
+    if (trigger) trigger.dispatchEvent(new Event("input", { bubbles: true }));
+  }
 });
