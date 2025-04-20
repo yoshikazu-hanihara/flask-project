@@ -84,27 +84,25 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =============================================================== */
 
   /* === ③ 一括入力処理 =========================================== */
-  function applyPreset(data) {
-    const form = document.getElementById("calc-form");
-    if (!form) return;
+ function applyPreset(data) {
+  const form = document.getElementById("calc-form");
+  Object.entries(data).forEach(([k, v]) => {
+    const el = form.querySelector(`[name="${k}"]`);
+    if (!el) return;
+    if (el.type === "radio") {
+      form.querySelectorAll(`[name="${k}"]`).forEach(r =>
+        (r.checked = Number(r.value) === Number(v))
+      );
+    } else if (el.type === "checkbox") {
+      el.checked = Boolean(v);
+    } else {
+      el.value = v;
+    }
+  });
+  /* ←ここがポイント ── どれか1つ（sales_priceでOK）に input イベントを送る */
+  const trigger = form.querySelector('[name="sales_price"]');
+  if (trigger) trigger.dispatchEvent(new Event("input", { bubbles: true }));
+}
 
-    Object.entries(data).forEach(([key, val]) => {
-      const el = form.querySelector(`[name="${key}"]`);
-      if (!el) return;
-
-      if (el.type === "radio") {
-        form.querySelectorAll(`[name="${key}"]`).forEach(r => {
-          r.checked = Number(r.value) === Number(val);
-        });
-      } else if (el.type === "checkbox") {
-        el.checked = Boolean(val);
-      } else {
-        el.value = val;
-      }
-    });
-
-    /* 入力完了を通知し、auto‑calc.js 側で再計算させる */
-    form.dispatchEvent(new Event("preset-applied"));
-  }
   /* =============================================================== */
 });
