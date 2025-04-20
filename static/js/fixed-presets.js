@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         el.value = v;
       }
     });
-    /* フォーム側の input/change 監視を活かして再計算を発火 */
-    form.dispatchEvent(new Event("input", { bubbles: true }));
+    /* ここで一発再計算を通知 */
+    form.dispatchEvent(new Event("preset-applied"));
   }
 });
