@@ -80,9 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = document.createElement("button");
     btn.className = "preset-btn";
     btn.innerHTML = `
-      <img src="{{ url_for('static', filename='') }}${preset.img}" alt="${preset.name}">
-      <span>${preset.name}</span>
-    `;
+     <img src="/static/${preset.img}" alt="${preset.name}">
+     <span>${preset.name}</span>
+   `;
     btn.addEventListener("click", () => applyPreset(preset.data));
     bar.appendChild(btn);
   });
