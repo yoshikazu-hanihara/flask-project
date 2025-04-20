@@ -140,6 +140,35 @@ float: left;
       font-weight: bold;
     }
 
+
+/* 画像付きプリセットボタン用の軽い装飾 */
+.preset-btn{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  padding:6px;
+  margin:4px;
+  border:1px solid #ccc;
+  background:#fff;
+  cursor:pointer;
+  border-radius:6px;
+  transition:box-shadow .2s;
+}
+.preset-btn:hover{
+  box-shadow:0 0 6px rgba(0,0,0,.2);
+}
+.preset-btn img{
+  width:80px;      /* サムネイルサイズはお好みで */
+  height:80px;
+  object-fit:cover;
+  border-radius:4px;
+}
+.preset-btn span{
+  font-size:.8rem;
+}
+
+
 /*--
 a {
   color: #0055aa; 
@@ -150,3 +179,6 @@ a:hover {
   text-decoration: underline;
 }
 --*/
+
+
+
