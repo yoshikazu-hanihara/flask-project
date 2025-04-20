@@ -22,6 +22,14 @@
   <div class="wrapper">
     <h2>陶磁器見積もり入力</h2>
 
+<div id="preset-bar" class="formbox-0">
+  <h3>過去事例から自動入力</h3>
+  <!-- ここに JS がボタンを追加します -->
+</div>
+
+
+
+
     <!-- 入力フォーム：すべての項目（基本数値＋オプション）をひとまとめに -->
     <div id="nyuuryoku" class="formbox-0">
       <form id="calc-form" onsubmit="return false;">
@@ -482,6 +490,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-
+<script src="{{ url_for('static', filename='js/preset-autofill.js') }}"></script>
 </body>
 </html>
