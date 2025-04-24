@@ -62,14 +62,21 @@ def _build_workbook(data: dict) -> BytesIO:
     # 発行日（任意）
     set_value(ws, "H3", datetime.date.today().strftime("%Y/%m/%d"))
 
-    # 式再計算を強制
-    wb.calculation_properties.fullCalcOnLoad = True
+    # ── 式再計算フラグ─────────────
+    if hasattr(wb, "calculation") and wb.calculation is not None:
+        # openpyxl ≥ 3.1
+        wb.calculation.fullCalcOnLoad = True
+    elif hasattr(wb, "calc_properties") and wb.calc_properties is not None:
+        # openpyxl 3.0 系
+        wb.calc_properties.fullCalcOnLoad = True
+    # ────────────────────────────────────────
 
     # メモリへ保存
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
     return bio
+
 
 # === 5. ファイル名ユーティリティ ================================
 def _make_filename() -> str:
