@@ -1,26 +1,25 @@
 # blueprints/export.py
+# ─────────────────────────────────────────────
+# ひな形 .xlsx に計算値を差し込んでダウンロード／メール添付
+# 「結合セルだと書き込み不可」問題を set_value() で自動回避
+# ─────────────────────────────────────────────
+
 from flask import Blueprint, session, send_file, redirect, url_for, flash
 from flask import current_app as app
 from flask_mail import Message
 from io import BytesIO
-import os, datetime
-import openpyxl
+import datetime, os, openpyxl
+from openpyxl.cell.cell import MergedCell
 
 export_bp = Blueprint("export", __name__, url_prefix="/export")
 
-# ─────────────────────────────────────────
-# 1. テンプレートのパス  
-#    static/template/estimate_template.xlsx という想定
-# ─────────────────────────────────────────
+# === 1. ひな形パス（テンプレは static/template/ に置く） ==========
 TPL_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),  # flask-project/
     "static", "template", "estimate_template.xlsx"
 )
 
-# ─────────────────────────────────────────
-# 2. Python のキー → テンプレ内セル の対応表
-#    （※セル番地はテンプレに合わせて自由に編集）
-# ─────────────────────────────────────────
+# === 2. Pythonキー ⇔ セル番地マッピング ==========================
 CELL_MAP = {
     "sales_price":             "C12",
     "order_quantity":          "C13",
@@ -35,37 +34,48 @@ CELL_MAP = {
     "profit_ratio":            "F26",
 }
 
-# - - - - - - - - - - - - - - - - - - - - -
-def _build_workbook(data: dict) -> BytesIO:
+# === 3. 結合セルでも安全に書き込むユーティリティ ================
+def set_value(ws, coord: str, value):
     """
-    テンプレートを読み込み、指定セルに値を差し込み、
-    メモリ上 (BytesIO) に保存して返す。
+    coord が結合セルの途中でも左上セルへ代入。
     """
-    # ❶ テンプレート読み込み（書式・画像・罫線保持）
-    wb = openpyxl.load_workbook(TPL_PATH)
-    ws = wb.active          # 見積書シートは1枚目想定
+    cell = ws[coord]
+    if isinstance(cell, MergedCell):
+        # 含まれる結合範囲を探す
+        for rng in ws.merged_cells.ranges:
+            if coord in rng:
+                ws.cell(rng.min_row, rng.min_col, value)
+                break
+    else:
+        cell.value = value
 
-    # ❷ セルに値を流し込む
+# === 4. ワークブック生成 =========================================
+def _build_workbook(data: dict) -> BytesIO:
+    wb = openpyxl.load_workbook(TPL_PATH)
+    ws = wb.active               # 見積書シートは 1 枚目想定
+
+    # 指定セルへ値を流し込む
     for key, cell in CELL_MAP.items():
         if key in data:
-            ws[cell].value = data[key]
+            set_value(ws, cell, data[key])
 
-    # ❸ 発行日（例）: テンプレ側で日付セルを用意しているなら
-    ws["H3"].value = datetime.date.today().strftime("%Y/%m/%d")
+    # 発行日（任意）
+    set_value(ws, "H3", datetime.date.today().strftime("%Y/%m/%d"))
 
-    # ❹ シート側数式を再計算させる場合
+    # 式再計算を強制
     wb.calculation_properties.fullCalcOnLoad = True
 
-    # ❺ メモリに保存
+    # メモリへ保存
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
     return bio
-# - - - - - - - - - - - - - - - - - - - - -
 
+# === 5. ファイル名ユーティリティ ================================
 def _make_filename() -> str:
     return f"見積書_{datetime.datetime.now():%Y%m%d_%H%M%S}.xlsx"
 
+# === 6. ルート：ダウンロード ===================================
 @export_bp.route("/excel")
 def download_excel():
     data = session.get("dashboard_data")
@@ -76,7 +86,7 @@ def download_excel():
     bio = _build_workbook(data)
     filename = _make_filename()
 
-    # バックアップ保存（任意）
+    # （任意）サーバー側へバックアップ保存
     export_dir = os.path.join(app.root_path, "exports")
     os.makedirs(export_dir, exist_ok=True)
     with open(os.path.join(export_dir, filename), "wb") as f:
@@ -89,6 +99,7 @@ def download_excel():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+# === 7. ルート：メール添付 =====================================
 @export_bp.route("/mail")
 def mail_excel():
     data = session.get("dashboard_data")
@@ -102,8 +113,8 @@ def mail_excel():
 
         msg = Message(
             subject="新しい見積書",
-            recipients=["nworks12345@gmail.com"],       # ←宛先を必要に応じて変更
-            body="自動生成した見積書 Excel を添付します。"
+            recipients=["nworks12345@gmail.com"],          # ←宛先を変更可
+            body="自動生成した見積書を添付します。"
         )
         msg.attach(
             filename,
