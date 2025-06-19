@@ -1,12 +1,11 @@
 # blueprints/export.py
 # ─────────────────────────────────────────────
-# ひな形 .xlsx に計算値を差し込んでダウンロード／メール添付
+# ひな形 .xlsx に計算値を差し込んでダウンロードする
 # 「結合セルだと書き込み不可」問題を set_value() で自動回避
 # ─────────────────────────────────────────────
 
 from flask import Blueprint, session, send_file, redirect, url_for, flash
 from flask import current_app as app
-from flask_mail import Message
 from io import BytesIO
 import datetime, os, openpyxl
 from openpyxl.cell.cell import MergedCell
@@ -105,33 +104,3 @@ def download_excel():
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-
-# === 7. ルート：メール添付 =====================================
-@export_bp.route("/mail")
-def mail_excel():
-    data = session.get("dashboard_data")
-    if not data:
-        flash("先に見積りを計算してください。")
-        return redirect(url_for("dashboard.dashboard"))
-
-    try:
-        bio = _build_workbook(data)
-        filename = _make_filename()
-
-        msg = Message(
-            subject="新しい見積書",
-            recipients=["nworks12345@gmail.com"],          # ←宛先を変更可
-            body="自動生成した見積書を添付します。"
-        )
-        msg.attach(
-            filename,
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            bio.getvalue()
-        )
-        app.extensions["mail"].send(msg)
-        flash("メールを送信しました。")
-    except Exception as e:
-        app.logger.exception("mail_excel failed")
-        flash(f"メール送信に失敗しました: {e}")
-
-    return redirect(url_for("dashboard.dashboard"))
