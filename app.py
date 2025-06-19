@@ -1,18 +1,16 @@
+# app.py  ―― メール機能を除去した最小構成
 from flask import Flask, render_template
-from flask_mail import Mail
+
+# 各種 Blueprint をインポート
 from blueprints.dashboard import dashboard_bp
 from blueprints.auth import auth
 from estimate import estimate_blueprint
 from blueprints.export import export_bp
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'your_secret_key'      # セッション用シークレット
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-mail = Mail(app)
-
+# Blueprint 登録
 app.register_blueprint(auth, url_prefix='')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(estimate_blueprint, url_prefix='/estimate')
