@@ -11,9 +11,6 @@ app.secret_key = 'your_secret_key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'nworks12345@gmail.com'
-app.config['MAIL_PASSWORD'] = 'yspr vktd yrmc wntn'
-app.config['MAIL_DEFAULT_SENDER'] = 'nworks12345@gmail.com'
 mail = Mail(app)
 
 app.register_blueprint(auth, url_prefix='')
