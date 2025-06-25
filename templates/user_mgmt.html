@@ -10,11 +10,11 @@
   <div class="wrapper">
   <h2>ユーザー管理</h2>
   <table>
-    <tr><th>ID</th><th>Email</th><th>操作</th></tr>
+    <tr><th>ID</th><th>アカウント名</th><th>操作</th></tr>
     {% for user in users %}
     <tr>
       <td>{{ user.id }}</td>
-      <td>{{ user.email }}</td>
+      <td>{{ user.account_name }}</td>
       <td>
         <form action="{{ url_for('user_mgmt.delete_user', user_id=user.id) }}" method="post" style="display:inline;">
           <button type="submit" onclick="return confirm('削除しますか？');">削除</button>
