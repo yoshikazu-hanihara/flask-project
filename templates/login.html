@@ -10,14 +10,14 @@
   <div class="wrapper">
     <h1>竹堂園の陶磁器見積もりアプリ</h1>
     <p>陶磁器のOEM製品用の大まかな見積もりを自動作成</p>
-    <p>メールアドレスを登録すると、送信前の見積もりを保存したり、送信済みの見積もりを確認できます。</p>
+    <p>アカウント名を登録すると、送信前の見積もりを保存したり、送信済みの見積もりを確認できます。</p>
     <div class="box-1">
     <h2>ログイン</h2>
    </div>
     <div class="box-2">
     <form method="post" action="{{ url_for('auth.login') }}">
-      <label>Email:</label>
-      <input type="email" name="email"><br><br>
+      <label>アカウント名:</label>
+      <input type="text" name="account_name"><br><br>
       <label>パスワード:</label>
       <input type="password" name="password"><br><br>
       <input type="submit" value="ログイン">
