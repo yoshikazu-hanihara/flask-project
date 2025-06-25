@@ -9,7 +9,7 @@ def index():
         return redirect(url_for('auth.login'))
     conn = get_connection()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT id, email FROM users ORDER BY id")
+        cursor.execute("SELECT id, account_name FROM users ORDER BY id")
         users = cursor.fetchall()
     conn.close()
     return render_template('user_mgmt.html', users=users)
