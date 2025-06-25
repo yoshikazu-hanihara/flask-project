@@ -11,43 +11,43 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
     else:
-        email = request.form.get('email')
+        account_name = request.form.get('account_name')
         password = request.form.get('password')
-        if not email or not password:
-            return "メールアドレス / パスワードを入力してください。"
+        if not account_name or not password:
+            return "アカウント名 / パスワードを入力してください。"
         conn = get_connection()
         user = None
         with conn.cursor() as cursor:
-            sql = "SELECT * FROM users WHERE email=%s"
-            cursor.execute(sql, (email,))
+            sql = "SELECT * FROM users WHERE account_name=%s"
+            cursor.execute(sql, (account_name,))
             user = cursor.fetchone()
         conn.close()
         if user and bcrypt_sha256.verify(password, user['password_hash']):
             session.clear()
             session['user_id'] = user['id']
-            session['email'] = user['email']
+            session['account_name'] = user['account_name']
             return redirect(url_for('dashboard.dashboard'))
         else:
-            return "ログイン失敗: メールアドレスまたはパスワードが違います。"
+            return "ログイン失敗: アカウント名またはパスワードが違います。"
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
         return render_template('register.html')
     else:
-        email = request.form.get('email')
+        account_name = request.form.get('account_name')
         password = request.form.get('password')
-        if not email or not password:
+        if not account_name or not password:
             return "必須項目が未入力です。"
         password_hash = bcrypt_sha256.hash(password)
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, password_hash))
+                cursor.execute("INSERT INTO users (account_name, password_hash) VALUES (%s, %s)", (account_name, password_hash))
             conn.commit()
         except Exception:
             conn.close()
-            return "登録に失敗しました。既に使われているメールアドレスかもしれません。"
+            return "登録に失敗しました。既に使われているアカウント名かもしれません。"
         conn.close()
         return redirect(url_for('auth.login'))
 
