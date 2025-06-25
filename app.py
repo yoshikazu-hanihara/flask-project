@@ -4,6 +4,7 @@ from flask import Flask, render_template
 # 各種 Blueprint をインポート
 from blueprints.dashboard import dashboard_bp
 from blueprints.auth import auth
+from blueprints.user_mgmt import user_mgmt_bp
 from estimate import estimate_blueprint
 from blueprints.export import export_bp
 
@@ -13,6 +14,7 @@ app.secret_key = 'your_secret_key'      # セッション用シークレット
 # Blueprint 登録
 app.register_blueprint(auth, url_prefix='')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+app.register_blueprint(user_mgmt_bp, url_prefix='/user_mgmt')
 app.register_blueprint(estimate_blueprint, url_prefix='/estimate')
 app.register_blueprint(export_bp)
 
