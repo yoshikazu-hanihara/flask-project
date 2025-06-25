@@ -68,38 +68,13 @@ def history():
             row['estimate_data'] = json.loads(row['estimate_data'])
     conn.close()
 
-    return render_template('history.html',
-                           active_list=active_list,
-                           deleted_list=deleted_list,
-                           sent_list=sent_list)
-
-
-# (2) 見積もりを「送信(最終確認)画面」にセットして移動
-@estimate_blueprint.route('/send_estimate/<int:estid>', endpoint='send_estimate')
-def send_estimate(estid):
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))  # auth の login へ
-
-    user_id = session['user_id']
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-          SELECT estimate_data 
-            FROM estimates
-           WHERE id=%s AND user_id=%s AND status='active'
-        """, (estid, user_id))
-        row = cursor.fetchone()
-    conn.close()
-
-    if not row:
-        return "この見積もりは存在しないか、既に削除または送信済みです。"
-
-    # セッションへ再保存し、final_contact へ飛ばす
-    data = json.loads(row['estimate_data'])
-    session['estimate_id'] = estid
-    session['dashboard_data'] = data
-    return redirect(url_for('final_contact'))
-
+    
+    return render_template(
+        'history.html',
+        active_list=active_list,
+        deleted_list=deleted_list,
+        sent_list=sent_list,
+    )
 
 # (3) 見積もり削除
 @estimate_blueprint.route('/delete_estimate/<int:estid>', endpoint='delete_estimate')
