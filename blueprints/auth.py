@@ -43,11 +43,21 @@ def register():
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("INSERT INTO users (account_name, password_hash) VALUES (%s, %s)", (account_name, password_hash))
+                # アカウント名の重複を事前にチェック
+                cursor.execute("SELECT id FROM users WHERE account_name=%s", (account_name,))
+                if cursor.fetchone():
+                    conn.close()
+                    return "登録に失敗しました。既に使われているアカウント名です。"
+
+                cursor.execute(
+                    "INSERT INTO users (account_name, password_hash) VALUES (%s, %s)",
+                    (account_name, password_hash),
+                )
             conn.commit()
         except Exception:
+            # 例外内容は伏せ、一般的なエラーとして扱う
             conn.close()
-            return "登録に失敗しました。既に使われているアカウント名かもしれません。"
+            return "登録に失敗しました。管理者にお問い合わせください。"
         conn.close()
         return redirect(url_for('auth.login'))
 
