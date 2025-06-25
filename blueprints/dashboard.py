@@ -419,54 +419,81 @@ def dashboard():
     return render_template('dashboard.html')
 
 
-@dashboard_bp.route('/post', methods=['POST'])
-def dashboard_post():
-    try:
-        inp = parse_input_data(request.form)
-    except ValueError as e:
-        return str(e)
-
+def _compute_dashboard_data(form):
+    """Parse input values and return calculated dashboard data."""
+    inp = parse_input_data(form)
+    
     total_cost = (
         inp["sales_price"] + inp["order_quantity"] + inp["product_weight"] +
         inp["mold_unit_price"] + inp["mold_count"] + inp["kiln_count"] +
         inp["gas_unit_price"] + inp["loss_defective"]
     )
 
-    try:
-        raw_dict = calculate_raw_material_costs(inp, request.form)
-    except ValueError as e:
-        return str(e)
+    raw_dict = calculate_raw_material_costs(inp, form)
+    man_dict = calculate_manufacturing_costs(
+        inp, form, raw_dict["raw_material_cost_total"]
+    )
 
-    man_dict = calculate_manufacturing_costs(inp, request.form, raw_dict["raw_material_cost_total"])
-
-    sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, inp["order_quantity"], total_cost)
-
-    dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
+    sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(
+        form, inp["order_quantity"], total_cost
+    )
+    
+    dashboard_data = assemble_dashboard_data(
+        inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio
+    )
     round_values_in_dict(dashboard_data, digits=0)
 
-    estimate_id = None
-    if 'user_id' in session:
-        user_id = session['user_id']
+    return dashboard_data
+
+
+    def _save_estimate_if_logged_in(data):
+        """Persist estimate when a user is logged in."""
+        if "user_id" not in session:
+            return None
+
+        user_id = session["user_id"]
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='active'", (user_id,))
-            active_count = cursor.fetchone()['cnt']
+            cursor.execute(
+                "SELECT COUNT(*) as cnt FROM estimates WHERE user_id=%s AND status='active'",
+                (user_id,),
+            )
+            active_count = cursor.fetchone()["cnt"]
             if active_count >= 3:
-                cursor.execute("""
+                cursor.execute(
+                """
                   SELECT id FROM estimates
                   WHERE user_id=%s AND status='active'
                   ORDER BY created_at ASC LIMIT 1
-                """, (user_id,))
-                oldest_id = cursor.fetchone()['id']
-                cursor.execute("UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s", (oldest_id,))
-            sql = """
+                               """,
+                (user_id,),
+            )
+            oldest_id = cursor.fetchone()["id"]
+            cursor.execute(
+                "UPDATE estimates SET status='deleted', deleted_at=NOW() WHERE id=%s",
+                (oldest_id,),
+            )
+        cursor.execute(
+            """
               INSERT INTO estimates (user_id, estimate_data, status, sent_at, deleted_at)
               VALUES (%s, %s, 'active', NULL, NULL)
-            """
-            cursor.execute(sql, (user_id, json.dumps(dashboard_data)))
-            estimate_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+                        """,
+            (user_id, json.dumps(data)),
+        )
+        estimate_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return estimate_id
+
+
+@dashboard_bp.route('/post', methods=['POST'])
+def dashboard_post():
+    try:
+        dashboard_data = _compute_dashboard_data(request.form)
+    except ValueError as e:
+        return str(e)
+
+    estimate_id = _save_estimate_if_logged_in(dashboard_data)
 
     session['dashboard_data'] = dashboard_data
     session['estimate_id'] = estimate_id
@@ -477,27 +504,11 @@ def dashboard_post():
 @dashboard_bp.route('/calculate', methods=['POST'])
 def calculate():
     try:
-        inp = parse_input_data(request.form)
+        dashboard_data = _compute_dashboard_data(request.form)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    total_cost = (
-        inp["sales_price"] + inp["order_quantity"] + inp["product_weight"] +
-        inp["mold_unit_price"] + inp["mold_count"] + inp["kiln_count"] +
-        inp["gas_unit_price"] + inp["loss_defective"]
-    )
 
-    try:
-        raw_dict = calculate_raw_material_costs(inp, request.form)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-
-    man_dict = calculate_manufacturing_costs(inp, request.form, raw_dict["raw_material_cost_total"])
-
-    sales_admin_cost_total, sales_admin_cost_ratio = calculate_sales_admin_cost(request.form, inp["order_quantity"], total_cost)
-
-    dashboard_data = assemble_dashboard_data(inp, raw_dict, man_dict, sales_admin_cost_total, sales_admin_cost_ratio)
-    round_values_in_dict(dashboard_data, digits=0)
 
     # AJAX 経由でもセッションに保存
     session['dashboard_data'] = dashboard_data
