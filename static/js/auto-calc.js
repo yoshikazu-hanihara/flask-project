@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function(){
       // 材料費項目-小計（円付き）
       document.getElementById('genzairyousyoukei_coefficient_display').innerText =
           "材料費項目-小計: " + numberWithCommas(data.genzairyousyoukei_coefficient) + "円";
+      document.getElementById('raw_material_cost_total_display').innerText =
+          "原材料費合計: " + numberWithCommas(data.raw_material_cost_total) + "円";
 
       // 製造販管費各項目の更新（カンマ＋円付き）
       document.getElementById('chumikin_cost_display').innerText =
