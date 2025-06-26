@@ -63,6 +63,8 @@ def round_values_in_dict(data, digits=0):
 
 def parse_input_data(req):
     try:
+        client_name     = req.get('client_name', '').strip()
+        subject         = req.get('subject', '').strip()
         sales_price     = float(req.get('sales_price', '').strip())
         order_quantity  = int(req.get('order_quantity', '').strip())
         product_weight  = float(req.get('product_weight', '').strip())
@@ -77,6 +79,8 @@ def parse_input_data(req):
         raise ValueError("入力項目が不十分です: " + str(e))
 
     return {
+        "client_name": client_name,
+        "subject": subject,
         "sales_price": sales_price,
         "order_quantity": order_quantity,
         "product_weight": product_weight,
@@ -315,6 +319,8 @@ def assemble_dashboard_data(
     sales_admin_cost_total,
     sales_admin_cost_ratio
 ):
+    client_name     = inp.get("client_name", "")
+    subject         = inp.get("subject", "")
     sales_price     = inp["sales_price"]
     order_quantity  = inp["order_quantity"]
     product_weight  = inp["product_weight"]
@@ -354,6 +360,8 @@ def assemble_dashboard_data(
     manufacturing_cost_ratio = man_dict.get("manufacturing_cost_ratio", 0)
 
     return {
+        "client_name": client_name,
+        "subject": subject,
         "sales_price": sales_price,
         "order_quantity": order_quantity,
         "product_weight": product_weight,
