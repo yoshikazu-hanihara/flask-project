@@ -32,6 +32,9 @@ CELL_MAP = {
     "profit_amount":           "F24",
     "profit_amount_total":     "F25",
     "profit_ratio":            "F26",
+    # 新しく追加されたフィールド
+    "client_name":             "C3",
+    "subject":                 "B5",
 }
 
 # === 保存ユーティリティ =============================================
@@ -84,6 +87,9 @@ def _build_workbook(data: dict) -> BytesIO:
 
     # 発行日（任意）
     set_value(ws, "H3", datetime.date.today().strftime("%Y/%m/%d"))
+
+    # H1 に作成日を "YYYY年MM月DD日" 形式で出力
+    set_value(ws, "H1", datetime.date.today().strftime("%Y年%m月%d日"))
 
     # ── 式再計算フラグ─────────────
     if hasattr(wb, "calculation") and wb.calculation is not None:
