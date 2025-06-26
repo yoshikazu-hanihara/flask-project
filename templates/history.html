@@ -1,15 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  
   <title>Excel 履歴</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-
-
+<div class="wrapper">
+  <h2>Excel 履歴</h2>
+  {% if not history_list %}
+    <p>保存された Excel はありません。</p>
   {% else %}
     {% for row in history_list %}    
       <div class="estimate-box">
