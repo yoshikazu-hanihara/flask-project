@@ -24,20 +24,21 @@ def get_account_column() -> str:
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'account_name'")
-            if cursor.fetchone():
-                ACCOUNT_COLUMN = 'account_name'
-            else:
-                cursor.execute("SHOW COLUMNS FROM users LIKE 'username'")
+            for candidate in ('account_name', 'username', 'email'):
+                cursor.execute("SHOW COLUMNS FROM users LIKE %s", (candidate,))
                 if cursor.fetchone():
-                    ACCOUNT_COLUMN = 'username'
-                else:
-                    cursor.execute("SHOW COLUMNS FROM users")
-                    cols = [row['Field'] for row in cursor.fetchall()]
-                    raise RuntimeError(
-                        'users table must contain account_name or username column. '
-                        f"Available columns: {', '.join(cols)}"
-                    )
+
+
+                    
+                    ACCOUNT_COLUMN = candidate
+                    break
+            if not ACCOUNT_COLUMN:
+                cursor.execute("SHOW COLUMNS FROM users")
+                cols = [row['Field'] for row in cursor.fetchall()]
+                raise RuntimeError(
+                    'users table must contain account_name, username or email column. '
+                    f"Available columns: {', '.join(cols)}"
+                )
     finally:
         conn.close()
 
