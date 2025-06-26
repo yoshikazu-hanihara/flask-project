@@ -1,6 +1,6 @@
 # auth.py
 from flask import Blueprint, render_template, request, session, redirect, url_for
-from db import get_connection
+from db import get_connection, get_account_column
 from passlib.hash import bcrypt_sha256
 
 # Blueprint の作成（'auth' が Blueprint 名、__name__ はモジュール名）
@@ -18,14 +18,14 @@ def login():
         conn = get_connection()
         user = None
         with conn.cursor() as cursor:
-            sql = "SELECT * FROM users WHERE account_name=%s"
+            sql = f"SELECT * FROM users WHERE {account_col}=%s"
             cursor.execute(sql, (account_name,))
             user = cursor.fetchone()
         conn.close()
         if user and bcrypt_sha256.verify(password, user['password_hash']):
             session.clear()
             session['user_id'] = user['id']
-            session['account_name'] = user['account_name']
+            session['account_name'] = user.get(account_col, account_name)
             return redirect(url_for('dashboard.dashboard'))
         else:
             return "ログイン失敗: アカウント名またはパスワードが違います。"
@@ -44,13 +44,13 @@ def register():
         try:
             with conn.cursor() as cursor:
                 # アカウント名の重複を事前にチェック
-                cursor.execute("SELECT id FROM users WHERE account_name=%s", (account_name,))
+                cursor.execute(f"SELECT id FROM users WHERE {account_col}=%s", (account_name,))
                 if cursor.fetchone():
                     conn.close()
                     return "登録に失敗しました。既に使われているアカウント名です。"
 
                 cursor.execute(
-                    "INSERT INTO users (account_name, password_hash) VALUES (%s, %s)",
+                    f"INSERT INTO users ({account_col}, password_hash) VALUES (%s, %s)",
                     (account_name, password_hash),
                 )
             conn.commit()
