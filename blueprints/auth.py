@@ -15,6 +15,7 @@ def login():
         password = request.form.get('password')
         if not account_name or not password:
             return "アカウント名 / パスワードを入力してください。"
+        account_col = get_account_column()
         conn = get_connection()
         user = None
         with conn.cursor() as cursor:
