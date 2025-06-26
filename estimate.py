@@ -41,8 +41,8 @@ def history():
     for row in history_list:
         try:
             row['data'] = json.loads(row.get('data_json', '{}'))
-            except Exception:
-                row['data'] = {}
+        except Exception:
+            row['data'] = {}
     return render_template('history.html', history_list=history_list)
 
 
