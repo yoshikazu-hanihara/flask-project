@@ -40,6 +40,7 @@ def register():
         if not account_name or not password:
             return "必須項目が未入力です。"
         password_hash = bcrypt_sha256.hash(password)
+        account_col = get_account_column()
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
