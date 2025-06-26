@@ -1,6 +1,15 @@
-from flask import Blueprint, session, render_template, redirect, url_for, send_file
+from flask import (
+    Blueprint,
+    session,
+    render_template,
+    redirect,
+    url_for,
+    send_file,
+)
 from flask import current_app as app
-import json, osfrom db import get_connection
+import json
+import os
+from db import get_connection
 
 
 estimate_blueprint = Blueprint('estimate', __name__)
