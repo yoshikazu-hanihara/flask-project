@@ -7,8 +7,9 @@
 from flask import Blueprint, session, send_file, redirect, url_for, flash
 from flask import current_app as app
 from io import BytesIO
-import datetime, os, openpyxl
+import datetime, os, openpyxl, json
 from openpyxl.cell.cell import MergedCell
+from db import get_connection
 
 export_bp = Blueprint("export", __name__, url_prefix="/export")
 
@@ -32,6 +33,29 @@ CELL_MAP = {
     "profit_amount_total":     "F25",
     "profit_ratio":            "F26",
 }
+
+# === 保存ユーティリティ =============================================
+def _save_history(user_id: int, filename: str, data: dict):
+    """Save exported excel info for the user."""
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS excel_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                filename VARCHAR(255) NOT NULL,
+                data_json TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        cursor.execute(
+            "INSERT INTO excel_history (user_id, filename, data_json) VALUES (%s, %s, %s)",
+            (user_id, filename, json.dumps(data)),
+        )
+    conn.commit()
+    conn.close()
 
 # === 3. 結合セルでも安全に書き込むユーティリティ ================
 def set_value(ws, coord: str, value):
@@ -92,11 +116,18 @@ def download_excel():
     bio = _build_workbook(data)
     filename = _make_filename()
 
-    # （任意）サーバー側へバックアップ保存
+    # -- サーバー側へユーザー単位で保存 ---------------------
     export_dir = os.path.join(app.root_path, "exports")
     os.makedirs(export_dir, exist_ok=True)
-    with open(os.path.join(export_dir, filename), "wb") as f:
-        f.write(bio.getbuffer())
+    if "user_id" in session:
+        user_dir = os.path.join(export_dir, str(session["user_id"]))
+        os.makedirs(user_dir, exist_ok=True)
+        with open(os.path.join(user_dir, filename), "wb") as f:
+            f.write(bio.getbuffer())
+        _save_history(session["user_id"], filename, data)
+    else:
+        with open(os.path.join(export_dir, filename), "wb") as f:
+            f.write(bio.getbuffer())
 
     return send_file(
         bio,
