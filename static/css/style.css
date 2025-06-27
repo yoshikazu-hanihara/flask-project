@@ -168,6 +168,27 @@ float: left;
   font-size:.8rem;
 }
 
+/* 基本情報入力エリア */
+#basic-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+#basic-info .client-name,
+#basic-info .subject-field {
+  display: flex;
+  align-items: center;
+}
+
+#basic-info .subject-field {
+  margin-left: 50px; /* 名前との間を広めに */
+}
+
+#basic-info .client-name span {
+  margin-left: 4px;
+}
+
 
 /*--
 a {
@@ -179,6 +200,3 @@ a:hover {
   text-decoration: underline;
 }
 --*/
-
-
-
