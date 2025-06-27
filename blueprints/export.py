@@ -7,7 +7,10 @@
 from flask import Blueprint, session, send_file, redirect, url_for, flash
 from flask import current_app as app
 from io import BytesIO
-import datetime, os, openpyxl, json
+import datetime
+import os
+import openpyxl
+import json
 from openpyxl.cell.cell import MergedCell
 from db import get_connection
 
@@ -19,23 +22,7 @@ TPL_PATH = os.path.join(
     "static", "template", "estimate_template.xlsx"
 )
 
-# === 2. Pythonキー ⇔ セル番地マッピング ==========================
-CELL_MAP = {
-    "sales_price":             "C12",
-    "order_quantity":          "C13",
-    "product_weight":          "C14",
-    "mold_unit_price":         "C15",
-    "mold_count":              "C16",
-    "raw_material_cost_total": "F20",
-    "manufacturing_cost_total":"F21",
-    "sales_admin_cost_total":  "F22",
-    "profit_amount":           "F24",
-    "profit_amount_total":     "F25",
-    "profit_ratio":            "F26",
-    # 新しく追加されたフィールド
-    "client_name":             "C3",
-    "subject":                 "B5",
-}
+
 
 # === 保存ユーティリティ =============================================
 def _save_history(user_id: int, filename: str, data: dict):
@@ -80,22 +67,10 @@ def _build_workbook(data: dict) -> BytesIO:
     wb = openpyxl.load_workbook(TPL_PATH)
     ws = wb.active               # 見積書シートは 1 枚目想定
 
-    # 指定セルへ値を流し込む
-    for key, cell in CELL_MAP.items():
-        if key in data:
-            set_value(ws, cell, data[key])
-
-    # 発行日（任意）
-    set_value(ws, "H3", datetime.date.today().strftime("%Y/%m/%d"))
-
-    # H1 に作成日を "YYYY年MM月DD日" 形式で出力
-    set_value(ws, "H1", datetime.date.today().strftime("%Y年%m月%d日"))
-
-    # 全項目の一覧を追記するシート
-    ws_all = wb.create_sheet("AllData")
-    ws_all.append(["date", datetime.date.today().strftime("%Y/%m/%d")])
-    for k, v in data.items():
-        ws_all.append([k, v])
+    # --- 新しい出力項目 ---
+    set_value(ws, "D3", data.get("client_name", ""))
+    set_value(ws, "B5", data.get("subject", ""))
+    set_value(ws, "F1", datetime.date.today().strftime("%Y年%m月%d日"))
 
     # ── 式再計算フラグ─────────────
     if hasattr(wb, "calculation") and wb.calculation is not None:
