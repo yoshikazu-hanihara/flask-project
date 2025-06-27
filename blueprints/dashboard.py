@@ -64,6 +64,8 @@ def round_values_in_dict(data, digits=0):
 def parse_input_data(req):
     try:
         client_name     = req.get('client_name', '').strip()
+        # Excel テンプレートに既に「様」があるため、入力で重複しないよう末尾の「様」を除外
+        client_name     = client_name.removesuffix('様').strip()
         subject         = req.get('subject', '').strip()
         sales_price     = float(req.get('sales_price', '').strip())
         order_quantity  = int(req.get('order_quantity', '').strip())
