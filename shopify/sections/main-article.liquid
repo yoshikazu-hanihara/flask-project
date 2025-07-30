@@ -92,34 +92,6 @@
       {{ 'blogs.article.back_to_blog' | t: title: blog.title | escape }}
     </a>
   </div>
-
-
-    {%- if article.previous_article or article.next_article -%}
-    <nav class="article-pagination page-width" role="navigation" aria-label="記事間ナビゲーション">
-      <ul class="article-pagination__list">
-        {%- if article.previous_article -%}
-          <li class="article-pagination__item article-pagination__item--prev">
-            <a class="article-pagination__link" href="{{ article.previous_article.url }}">
-              {% render 'icon-arrow-left' %}
-              {{ 'blogs.article.previous' | t }}
-            </a>
-          </li>
-        {%- endif -%}
-
-        {%- if article.next_article -%}
-          <li class="article-pagination__item article-pagination__item--next">
-            <a class="article-pagination__link" href="{{ article.next_article.url }}">
-              {{ 'blogs.article.next' | t }}
-              {% render 'icon-arrow-right' %}
-            </a>
-          </li>
-        {%- endif -%}
-      </ul>
-    </nav>
-  {%- endif -%}
-
-  
-  
   {%- if blog.comments_enabled? -%}
     <div class="article-template__comment-wrapper background-secondary">
       <div
