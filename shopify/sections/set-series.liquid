@@ -1,0 +1,199 @@
+<div class="set-series page-width">
+    <h2>{{ section.settings.set-title }}</h2>
+    <div class="set-sample"> <img src="{{ section.settings.set-image | img_url: "master" }}">
+        <div>
+            <p class="ttl">セット内容例</p>
+            <div class="detail">
+                <p class="set-content">{{ section.settings.set-content }}</p>
+                <div class="wrapping">
+                <div>+</div>
+                <div> <img src="https://cdn.shopify.com/s/files/1/0608/7599/7422/files/icon_gift.png"> <p>有料ラッピング ¥330</p> </div>
+                </div>
+            </div>
+            <p class="set-price"><span>合計</span> ¥{{ section.settings.set-price }}</p>
+        </div>
+    </div>
+    <h3>セットにおすすめの商品</h3>
+    {% assign collection = section.settings.collection %}
+    <ul>
+        {% for product in collection.products %}
+        <li> <a href="{{ product.url }}">
+            <ul>
+                <li><img src="{{ product.featured_image | img_url: "master" }}"></li>
+                <li>{{ product.title }}</li>
+                <li>{{ product.price | money_without_trailing_zeros }}</li>
+            </ul>
+            </a> </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% schema %}
+  {
+    "name": "セット販売表示",
+    "settings": [
+      {
+        "id": "set-title",
+        "type": "text",
+        "label": "タイトル",
+        "default":  "お好きな組み合わせでギフトセットに！" 
+      },
+      {
+        "id": "set-image",
+        "type": "image_picker",
+        "label": "画像を選ぶ"
+      },
+      {
+        "id": "set-content",
+        "type": "textarea",
+        "label": "セット内容",
+        "default": "・プレート<br>・お茶碗<br>・マグカップ",
+        "info": "※改行は<br>"
+      },
+      {
+        "id": "set-price",
+        "type": "text",
+        "label": "合計価格"
+      },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "コレクションを選択"
+    }
+  ],
+  "presets": [
+      {
+        "name": "セット販売表示"
+      }
+    ]
+  }
+{% endschema %}
+
+{% stylesheet %}
+.set-series {
+}
+.set-series {
+    margin-top: 5em;
+}
+.set-series .set-sample {
+    display: flex;
+}
+.set-series .set-sample img, .set-series .set-sample div {
+    width: calc(100% / 2);
+}
+.set-series .set-sample > div {
+    padding: 3vw;
+}
+.set-series .ttl {
+    border-bottom: 1px #ddd solid;
+    font-size: 90%;
+}
+.set-series .detail {
+    display: flex;
+    width: 100%!important;
+    justify-content: space-between;
+    align-items: center;
+}
+.set-series .set-content, .set-series .wrapping {
+    width: 50%;
+}
+.set-series ul {
+    padding-left: 0;
+}
+.set-series > ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content:space-between;
+}
+.set-series > ul::before{
+  content:"";
+  display: block;
+  width:23%;
+  order:1;
+}
+.set-series > ul::after{
+  content:"";
+  display: block;
+  width:23%;
+}
+.set-series > ul li {
+    list-style: none;
+    font-size: 90%;
+    text-align: center;
+}
+.set-series > ul > li {
+    width: 22%;
+}
+.set-series ul li img {
+    width: 100%!important;
+}
+.set-series .set-price {
+    position: relative;
+    text-align: right;
+    font-size: 130%;
+    font-weight: bold;
+}
+.set-series .set-price span {
+    font-size: 70%;
+    font-weight: normal;
+}
+.set-series .set-price::before {
+    content: "";
+    right: 6em;
+    box-sizing: border-box;
+    width: 26px;
+    height: 17px;
+    position: absolute;
+    bottom: 0%;
+    transform: translateY(-50%);
+    background-image: url(https://cdn.shopify.com/s/files/1/0608/7599/7422/files/arrow_r.png);
+    background-position: left;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.wrapping {
+    display: flex;
+    align-items: center;
+}
+.wrapping div:first-of-type {
+    text-align: right;
+    font-size: larger;
+    font-weight: bold;
+}
+.wrapping div:last-of-type {
+    text-align: center;
+}
+.wrapping div img {
+    max-width: 70px;
+}
+.wrapping div p {
+    margin: 0;
+    line-height: 1.2;
+    font-size: 12px;
+}
+@media screen and (max-width: 749px) {
+.set-series h3 {
+    margin-top: 0;
+}
+.set-series .set-sample {
+    display: block;
+}
+.set-series .set-sample img, .set-series .set-sample div {
+    width: 100%;
+}
+    .set-series > ul > li {
+        width: 48%;
+    }
+.set-series .set-content, .set-series .wrapping {
+    width: auto!important;
+    margin-right: 1em;
+}
+.wrapping div:first-of-type {
+    text-align: center;
+}
+}
+{% endstylesheet %}
+
+{% javascript %}
+{% endjavascript %}

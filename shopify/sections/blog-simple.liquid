@@ -1,0 +1,119 @@
+<div class="page-width">
+    
+  <h2>{{ section.settings.blog-list-title }}</h2>
+
+{%- assign blog = blogs[section.settings.blog-list] -%}
+<ul class="blog_list">
+    {% assign current_article_id = article.id %}
+    {% for article in blog.articles limit: section.settings.post-limit %}
+    {% if article.id != current_article_id %}
+    <li class="blog_article">
+        <a href="{{ article.url }}">
+        <div class="article_info">
+            {% if section.settings.article-date %}
+            <span class="article_date">{{ article.published_at | date: "%Y ⁄ %m ⁄ %d" }}</span>
+            {% endif %}
+            <h3 class="article_title">{{ article.title }}</h3>
+            </div>
+        </a>
+    </li>
+    {% endif %}
+    {% endfor %}
+</ul>
+<p class="viewall"><a href="{{ blog.url }}" class="button" >お知らせ一覧へ</a></p>
+
+</div>
+
+{% stylesheet %}
+  .blog_list a {
+    color: var(--gw-pf-main-text-color);
+    text-decoration: none;
+    }
+  .blog_list li {
+    list-style: none;
+    }
+  .article_info {
+    display: flex;
+    margin-bottom: 2rem;
+    align-items: center;
+    }
+  .article_date {
+    margin-right: 3%;
+    padding-right: 3%;
+    border-right: 1px solid #000000;
+    }
+  .article_title {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-family: var(--font-body-family);
+    }
+  .viewall {
+      font-size: calc(var(--gw-font-size-base) * 0.75);
+    text-align: right;
+    }
+  .viewall a.button {
+    display: inline-block!important;
+    background: none;
+    color: #000;
+      }
+
+  @media screen and (max-width: 749px) {
+  .blog_list  {
+    padding-left: 0;
+}
+    .article_info {
+      display: block;
+    }
+    .article_date {
+      margin-right: 0;
+      padding-right: 0;
+      border-right: none;
+    }
+    .article_title {
+      margin-top: 0.5rem;
+      font-size: calc(var(--gw-font-size-base) * 0.875);
+    }
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+  {
+    "name": "ブログ一覧リスト",
+    "settings": [
+      {
+        "type": "text",
+        "id": "blog-list-title",
+        "label": "タイトル"
+        },
+      {
+        "id": "blog-list",
+        "type": "blog",
+        "label": "表示するブログ記事を選択"
+      },
+      {
+        "id": "post-limit",
+        "type": "range",
+        "label": "表示数を選択",
+        "min": 1,
+        "max": 6,
+        "step": 1,
+        "default": 3
+      },
+      {
+        "id": "article-date",
+        "type": "checkbox",
+        "label": "日付を表示する",
+        "default": true
+      }
+    ] ,
+    "presets": [
+      {
+        "name": "ブログ一覧リスト"
+      }
+    ]
+  }
+{% endschema %}
+
+{% javascript %}
+{% endjavascript %}
